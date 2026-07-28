@@ -4,6 +4,7 @@ export default function Home() {
     { name: 'Reservations', href: '/reservations', color: '#16a34a' },
     { name: 'Front Desk', href: '/frontdesk', color: '#d97706' },
     { name: 'Guests', href: '/guests', color: '#7c3aed' },
+    { name: 'Billing', href: '/billing', color: '#0891b2' },
   ]
 
   return (
