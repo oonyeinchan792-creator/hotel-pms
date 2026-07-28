@@ -30,12 +30,21 @@ export default function RoomsPage() {
       typesData?.forEach((t) => (typesMap[t.id] = t.name))
       setRoomTypes(typesMap)
 
-      const { data: roomsData } = await supabase.from('rooms').select('*').order('room_number')
-      setRooms(roomsData || [])
+      const { data: roomsData } = await supabase.from('rooms').select('*')
+      const sorted = (roomsData || []).sort((a, b) => Number(a.room_number) - Number(b.room_number))
+      setRooms(sorted)
       setLoading(false)
     }
     load()
   }, [])
+
+  const roomsByFloor = {}
+  rooms.forEach((room) => {
+    const floorKey = room.floor || 'Other'
+    if (!roomsByFloor[floorKey]) roomsByFloor[floorKey] = []
+    roomsByFloor[floorKey].push(room)
+  })
+  const sortedFloors = Object.keys(roomsByFloor).sort((a, b) => Number(a) - Number(b))
 
   return (
     <main style={{ padding: '40px' }}>
@@ -50,23 +59,30 @@ export default function RoomsPage() {
         </p>
       )}
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '12px', marginTop: '20px' }}>
-        {rooms.map((room) => (
-          <div
-            key={room.id}
-            style={{
-              padding: '16px',
-              borderRadius: '8px',
-              background: statusColors[room.status] || '#9ca3af',
-              color: 'white',
-            }}
-          >
-            <div style={{ fontSize: '20px', fontWeight: 'bold' }}>{room.room_number}</div>
-            <div style={{ fontSize: '12px' }}>{roomTypes[room.room_type_id] || ''}</div>
-            <div style={{ fontSize: '12px', marginTop: '8px' }}>{statusLabels[room.status] || room.status}</div>
+      {sortedFloors.map((floorKey) => (
+        <div key={floorKey} style={{ marginTop: '28px' }}>
+          <h3 style={{ color: '#374151', borderBottom: '2px solid #e5e7eb', paddingBottom: '6px' }}>
+            Floor {floorKey}
+          </h3>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '12px', marginTop: '12px' }}>
+            {roomsByFloor[floorKey].map((room) => (
+              <div
+                key={room.id}
+                style={{
+                  padding: '16px',
+                  borderRadius: '8px',
+                  background: statusColors[room.status] || '#9ca3af',
+                  color: 'white',
+                }}
+              >
+                <div style={{ fontSize: '20px', fontWeight: 'bold' }}>{room.room_number}</div>
+                <div style={{ fontSize: '12px' }}>{roomTypes[room.room_type_id] || ''}</div>
+                <div style={{ fontSize: '12px', marginTop: '8px' }}>{statusLabels[room.status] || room.status}</div>
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
+        </div>
+      ))}
     </main>
   )
 }
