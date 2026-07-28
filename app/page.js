@@ -13,7 +13,7 @@ export default function Home() {
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginTop: '24px' }}>
         {modules.map((m) => (
-          
+          <a
             key={m.name}
             href={m.href}
             style={{
