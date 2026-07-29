@@ -3,19 +3,23 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 
 const statusColors = {
-  vacant_clean: '#16a34a',
   vacant_dirty: '#eab308',
-  occupied_clean: '#2563eb',
+  vacant_clean: '#16a34a',
+  vacant_inspected: '#0d9488',
   occupied_dirty: '#dc2626',
+  occupied_clean: '#2563eb',
   out_of_order: '#6b7280',
+  out_of_service: '#1f2937',
 }
 
 const statusLabels = {
-  vacant_clean: 'Vacant Clean',
   vacant_dirty: 'Vacant Dirty',
-  occupied_clean: 'Occupied',
+  vacant_clean: 'Vacant Clean',
+  vacant_inspected: 'Vacant Inspected',
   occupied_dirty: 'Occupied Dirty',
+  occupied_clean: 'Occupied',
   out_of_order: 'Out of Order',
+  out_of_service: 'Out of Service',
 }
 
 export default function RoomsPage() {
@@ -38,6 +42,7 @@ export default function RoomsPage() {
     load()
   }, [])
 
+  // Group rooms by floor for display
   const roomsByFloor = {}
   rooms.forEach((room) => {
     const floorKey = room.floor || 'Other'
