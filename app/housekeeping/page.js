@@ -38,6 +38,8 @@ export default function HousekeepingPage() {
   const [floorPlan, setFloorPlan] = useState(null) // preview before confirming
   const [autoAssigning, setAutoAssigning] = useState(false)
 
+  const [rangeRows, setRangeRows] = useState([{ id: 1, staffName: '', fromRoom: '', toRoom: '' }])
+
   async function loadAll() {
     setLoading(true)
 
@@ -90,6 +92,50 @@ export default function HousekeepingPage() {
     const taskIds = tasks.map((t) => t.id)
     if (taskIds.length === 0) return
     await supabase.from('housekeeping_tasks').delete().in('id', taskIds)
+    loadAll()
+  }
+
+  function addRangeRow() {
+    setRangeRows([...rangeRows, { id: Date.now(), staffName: '', fromRoom: '', toRoom: '' }])
+  }
+
+  function removeRangeRow(id) {
+    setRangeRows(rangeRows.filter((r) => r.id !== id))
+  }
+
+  function updateRangeRow(id, field, value) {
+    setRangeRows(rangeRows.map((r) => (r.id === id ? { ...r, [field]: value } : r)))
+  }
+
+  function roomsInRange(fromRoom, toRoom) {
+    const dirtyRooms = rooms.filter((r) => r.status === 'vacant_dirty' || r.status === 'occupied_dirty')
+    return dirtyRooms.filter((r) => {
+      const num = Number(r.room_number)
+      return num >= Number(fromRoom) && num <= Number(toRoom)
+    })
+  }
+
+  async function submitRangeAssignments() {
+    const validRows = rangeRows.filter((r) => r.staffName.trim() && r.fromRoom && r.toRoom)
+    if (validRows.length === 0) return
+
+    const inserts = []
+    validRows.forEach((row) => {
+      const matchedRooms = roomsInRange(row.fromRoom, row.toRoom)
+      matchedRooms.forEach((room) => {
+        inserts.push({
+          room_id: room.id,
+          assigned_to: row.staffName.trim(),
+          status: 'pending',
+        })
+      })
+    })
+
+    if (inserts.length > 0) {
+      await supabase.from('housekeeping_tasks').insert(inserts)
+    }
+
+    setRangeRows([{ id: Date.now(), staffName: '', fromRoom: '', toRoom: '' }])
     loadAll()
   }
 
@@ -260,6 +306,53 @@ export default function HousekeepingPage() {
           })}
         </div>
       )}
+
+      {/* Quick Range Assignment - staff name + room range per row */}
+      <div style={{ background: 'white', border: '1px solid #cbd5e1', borderRadius: '6px', marginBottom: '16px' }}>
+        <div style={{ background: '#0f2540', color: 'white', padding: '10px 16px', borderRadius: '6px 6px 0 0', fontSize: '13px', fontWeight: 'bold' }}>
+          Quick Assignment — e.g. Aung Aung (101–110), Nilar (201–220)
+        </div>
+        <div style={{ padding: '16px' }}>
+          {rangeRows.map((row) => {
+            const preview = row.fromRoom && row.toRoom ? roomsInRange(row.fromRoom, row.toRoom).length : null
+            return (
+              <div key={row.id} style={{ display: 'flex', gap: '10px', alignItems: 'center', marginBottom: '10px', flexWrap: 'wrap' }}>
+                <input
+                  placeholder="Staff name"
+                  value={row.staffName}
+                  onChange={(e) => updateRangeRow(row.id, 'staffName', e.target.value)}
+                  style={{ ...inputStyle, flex: '0 1 160px' }}
+                />
+                <span style={{ fontSize: '13px', color: '#64748b' }}>Room</span>
+                <input
+                  placeholder="From"
+                  value={row.fromRoom}
+                  onChange={(e) => updateRangeRow(row.id, 'fromRoom', e.target.value)}
+                  style={{ ...inputStyle, width: '80px' }}
+                />
+                <span style={{ fontSize: '13px', color: '#64748b' }}>–</span>
+                <input
+                  placeholder="To"
+                  value={row.toRoom}
+                  onChange={(e) => updateRangeRow(row.id, 'toRoom', e.target.value)}
+                  style={{ ...inputStyle, width: '80px' }}
+                />
+                {preview !== null && (
+                  <span style={{ fontSize: '12px', color: '#d97706', fontWeight: 'bold' }}>{preview} room(s)</span>
+                )}
+                {rangeRows.length > 1 && (
+                  <button onClick={() => removeRangeRow(row.id)} style={actionBtn('#dc2626')}>Remove</button>
+                )}
+              </div>
+            )
+          })}
+
+          <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
+            <button onClick={addRangeRow} style={{ ...actionBtn('#e2e8f0'), color: '#0f2540' }}>+ Add Attendant</button>
+            <button onClick={submitRangeAssignments} style={actionBtn('#16a34a')}>Assign All</button>
+          </div>
+        </div>
+      </div>
 
       {/* Auto-Assign by Floor */}
       <div style={{ background: 'white', border: '1px solid #cbd5e1', borderRadius: '6px', marginBottom: '16px' }}>
