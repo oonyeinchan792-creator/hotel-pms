@@ -8,6 +8,14 @@ const taskStatusLabel = {
   completed: 'Completed',
 }
 
+const roomStatusLabel = {
+  vacant_clean: 'Vacant Clean',
+  vacant_dirty: 'Vacant Dirty',
+  occupied_clean: 'Occupied Clean',
+  occupied_dirty: 'Occupied Dirty',
+  out_of_order: 'Out of Order',
+}
+
 export default function HousekeepingPrintPage() {
   const [tasks, setTasks] = useState([])
   const [roomTypes, setRoomTypes] = useState({})
@@ -23,7 +31,7 @@ export default function HousekeepingPrintPage() {
 
       const { data: taskData } = await supabase
         .from('housekeeping_tasks')
-        .select('*, rooms(room_number, floor, room_type_id)')
+        .select('*, rooms(room_number, floor, room_type_id, status)')
         .neq('status', 'completed')
         .order('assigned_to')
       setTasks(taskData || [])
@@ -73,6 +81,7 @@ export default function HousekeepingPrintPage() {
             <thead>
               <tr style={{ background: '#f1f5f9', textAlign: 'left' }}>
                 <th style={{ padding: '8px', border: '1px solid #cbd5e1' }}>Room</th>
+                <th style={{ padding: '8px', border: '1px solid #cbd5e1' }}>Status</th>
                 <th style={{ padding: '8px', border: '1px solid #cbd5e1' }}>Floor</th>
                 <th style={{ padding: '8px', border: '1px solid #cbd5e1' }}>Room Type</th>
                 <th style={{ padding: '8px', border: '1px solid #cbd5e1' }}>Task Status</th>
@@ -85,6 +94,9 @@ export default function HousekeepingPrintPage() {
                 .map((t) => (
                   <tr key={t.id}>
                     <td style={{ padding: '8px', border: '1px solid #cbd5e1', fontWeight: 'bold' }}>{t.rooms?.room_number}</td>
+                    <td style={{ padding: '8px', border: '1px solid #cbd5e1', fontWeight: 'bold', color: t.rooms?.status?.includes('dirty') ? '#dc2626' : '#16a34a' }}>
+                      {roomStatusLabel[t.rooms?.status] || t.rooms?.status}
+                    </td>
                     <td style={{ padding: '8px', border: '1px solid #cbd5e1' }}>{t.rooms?.floor}</td>
                     <td style={{ padding: '8px', border: '1px solid #cbd5e1' }}>{roomTypes[t.rooms?.room_type_id] || ''}</td>
                     <td style={{ padding: '8px', border: '1px solid #cbd5e1' }}>{taskStatusLabel[t.status]}</td>
