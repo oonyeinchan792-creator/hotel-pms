@@ -3,11 +3,13 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 
 const statusInfo = {
-  vacant_clean: { bg: '#16a34a', label: 'Vacant Clean' },
-  vacant_dirty: { bg: '#eab308', label: 'Vacant Dirty' },
-  occupied_clean: { bg: '#2563eb', label: 'Occupied Clean' },
-  occupied_dirty: { bg: '#dc2626', label: 'Occupied Dirty' },
-  out_of_order: { bg: '#6b7280', label: 'Out of Order' },
+  vacant_dirty: { bg: '#eab308', label: 'Vacant Dirty', code: 'VD' },
+  vacant_clean: { bg: '#16a34a', label: 'Vacant Clean', code: 'VC' },
+  vacant_inspected: { bg: '#0d9488', label: 'Vacant Inspected', code: 'IP' },
+  occupied_dirty: { bg: '#dc2626', label: 'Occupied Dirty', code: 'OD' },
+  occupied_clean: { bg: '#2563eb', label: 'Occupied Clean', code: 'OC' },
+  out_of_order: { bg: '#6b7280', label: 'Out of Order', code: 'OOO' },
+  out_of_service: { bg: '#1f2937', label: 'Out of Service', code: 'OOS' },
 }
 
 const taskStatusInfo = {
@@ -110,7 +112,7 @@ export default function HousekeepingPage() {
 
   function roomsInRange(fromRoom, toRoom) {
     const eligibleRooms = rooms.filter((r) => {
-      if (r.status === 'out_of_order') return false
+      if (r.status === 'out_of_order' || r.status === 'out_of_service') return false
       if (includeCleanRooms) return true
       return r.status === 'vacant_dirty' || r.status === 'occupied_dirty'
     })
@@ -247,12 +249,16 @@ export default function HousekeepingPage() {
     if (filters.statusFilter === 'needs_attention') {
       return r.status === 'vacant_dirty' || r.status === 'occupied_dirty'
     }
+    if (filters.statusFilter === 'vacant_inspected') return r.status === 'vacant_inspected'
     if (filters.statusFilter === 'out_of_order') return r.status === 'out_of_order'
+    if (filters.statusFilter === 'out_of_service') return r.status === 'out_of_service'
     return true
   })
 
   const dirtyCount = rooms.filter((r) => r.status === 'vacant_dirty' || r.status === 'occupied_dirty').length
   const oooCount = rooms.filter((r) => r.status === 'out_of_order').length
+  const oosCount = rooms.filter((r) => r.status === 'out_of_service').length
+  const inspectedCount = rooms.filter((r) => r.status === 'vacant_inspected').length
   const floorOptions = [...new Set(rooms.map((r) => r.floor))].sort((a, b) => Number(a) - Number(b))
 
   const inputStyle = { padding: '8px', borderRadius: '4px', border: '1px solid #cbd5e1', fontSize: '13px' }
@@ -272,14 +278,22 @@ export default function HousekeepingPage() {
         </a>
       </div>
 
-      <div style={{ display: 'flex', gap: '14px', marginBottom: '20px', marginTop: '20px' }}>
+      <div style={{ display: 'flex', gap: '14px', marginBottom: '20px', marginTop: '20px', flexWrap: 'wrap' }}>
         <div style={{ background: 'white', padding: '18px 20px', borderRadius: '6px', borderTop: '3px solid #dc2626' }}>
           <div style={{ fontSize: '12px', color: '#64748b' }}>Needs Cleaning</div>
           <div style={{ fontSize: '28px', fontWeight: 'bold', color: '#0f2540' }}>{dirtyCount}</div>
         </div>
+        <div style={{ background: 'white', padding: '18px 20px', borderRadius: '6px', borderTop: '3px solid #0d9488' }}>
+          <div style={{ fontSize: '12px', color: '#64748b' }}>Inspected</div>
+          <div style={{ fontSize: '28px', fontWeight: 'bold', color: '#0f2540' }}>{inspectedCount}</div>
+        </div>
         <div style={{ background: 'white', padding: '18px 20px', borderRadius: '6px', borderTop: '3px solid #6b7280' }}>
           <div style={{ fontSize: '12px', color: '#64748b' }}>Out of Order</div>
           <div style={{ fontSize: '28px', fontWeight: 'bold', color: '#0f2540' }}>{oooCount}</div>
+        </div>
+        <div style={{ background: 'white', padding: '18px 20px', borderRadius: '6px', borderTop: '3px solid #1f2937' }}>
+          <div style={{ fontSize: '12px', color: '#64748b' }}>Out of Service</div>
+          <div style={{ fontSize: '28px', fontWeight: 'bold', color: '#0f2540' }}>{oosCount}</div>
         </div>
         <div style={{ background: 'white', padding: '18px 20px', borderRadius: '6px', borderTop: '3px solid #d97706' }}>
           <div style={{ fontSize: '12px', color: '#64748b' }}>Active Tasks</div>
@@ -464,7 +478,9 @@ export default function HousekeepingPage() {
             <label style={{ fontSize: '12px', color: '#64748b', display: 'block', marginBottom: '4px' }}>Status</label>
             <select style={inputStyle} value={filters.statusFilter} onChange={(e) => setFilters({ ...filters, statusFilter: e.target.value })}>
               <option value="needs_attention">Needs Cleaning</option>
+              <option value="vacant_inspected">Inspected</option>
               <option value="out_of_order">Out of Order</option>
+              <option value="out_of_service">Out of Service</option>
               <option value="all">All Rooms</option>
             </select>
           </div>
@@ -540,11 +556,19 @@ export default function HousekeepingPage() {
                         Mark Clean
                       </button>
                     )}
-                    {room.status !== 'out_of_order' && (
+                    {room.status === 'vacant_clean' && (
+                      <button onClick={() => updateStatus(room.id, 'vacant_inspected')} style={actionBtn('#0d9488')}>
+                        Inspect
+                      </button>
+                    )}
+                    {room.status !== 'out_of_order' && room.status !== 'out_of_service' && (
                       <button onClick={() => updateStatus(room.id, 'out_of_order')} style={actionBtn('#6b7280')}>OOO</button>
                     )}
-                    {room.status === 'out_of_order' && (
-                      <button onClick={() => updateStatus(room.id, 'vacant_clean')} style={actionBtn('#2563eb')}>Return</button>
+                    {room.status !== 'out_of_service' && room.status !== 'out_of_order' && (
+                      <button onClick={() => updateStatus(room.id, 'out_of_service')} style={actionBtn('#1f2937')}>OOS</button>
+                    )}
+                    {(room.status === 'out_of_order' || room.status === 'out_of_service') && (
+                      <button onClick={() => updateStatus(room.id, 'vacant_dirty')} style={actionBtn('#2563eb')}>Return to Service</button>
                     )}
                   </td>
                 </tr>
