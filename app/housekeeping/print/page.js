@@ -9,11 +9,13 @@ const taskStatusLabel = {
 }
 
 const roomStatusLabel = {
-  vacant_clean: 'Vacant Clean',
   vacant_dirty: 'Vacant Dirty',
-  occupied_clean: 'Occupied Clean',
+  vacant_clean: 'Vacant Clean',
+  vacant_inspected: 'Vacant Inspected',
   occupied_dirty: 'Occupied Dirty',
+  occupied_clean: 'Occupied Clean',
   out_of_order: 'Out of Order',
+  out_of_service: 'Out of Service',
 }
 
 export default function HousekeepingPrintPage() {
