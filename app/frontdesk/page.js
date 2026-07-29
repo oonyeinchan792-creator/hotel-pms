@@ -38,7 +38,7 @@ export default function FrontDeskPage() {
         .from('rooms')
         .select('*')
         .eq('room_type_id', r.room_type_id)
-        .in('status', ['vacant_clean', 'vacant_dirty'])
+        .in('status', ['vacant_clean', 'vacant_dirty', 'vacant_inspected'])
         .order('room_number')
       roomsMap[r.id] = rooms || []
     }
