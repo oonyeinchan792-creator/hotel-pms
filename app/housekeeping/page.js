@@ -34,6 +34,10 @@ export default function HousekeepingPage() {
   const [assignStaff, setAssignStaff] = useState('')
   const [showAssignBar, setShowAssignBar] = useState(false)
 
+  const [attendantNames, setAttendantNames] = useState('')
+  const [floorPlan, setFloorPlan] = useState(null) // preview before confirming
+  const [autoAssigning, setAutoAssigning] = useState(false)
+
   async function loadAll() {
     setLoading(true)
 
@@ -108,6 +112,68 @@ export default function HousekeepingPage() {
     loadAll()
   }
 
+  function roomCredit(room) {
+    if (room.status === 'vacant_dirty') return 1.0
+    if (room.status === 'occupied_dirty') return 0.5
+    return 0
+  }
+
+  function generateFloorPlan() {
+    const names = attendantNames.split(',').map((n) => n.trim()).filter(Boolean)
+    if (names.length === 0) return
+
+    const dirtyRooms = rooms.filter((r) => r.status === 'vacant_dirty' || r.status === 'occupied_dirty')
+
+    // Group rooms by floor, compute credit per floor
+    const floorGroups = {}
+    dirtyRooms.forEach((r) => {
+      if (!floorGroups[r.floor]) floorGroups[r.floor] = { floor: r.floor, rooms: [], credit: 0 }
+      floorGroups[r.floor].rooms.push(r)
+      floorGroups[r.floor].credit += roomCredit(r)
+    })
+
+    // Sort floors by credit descending (largest first for better balance)
+    const floorsList = Object.values(floorGroups).sort((a, b) => b.credit - a.credit)
+
+    // Greedy: assign each WHOLE floor to the attendant with the lowest current total
+    const assignments = names.map((name) => ({ name, floors: [], totalCredit: 0 }))
+
+    floorsList.forEach((floorGroup) => {
+      assignments.sort((a, b) => a.totalCredit - b.totalCredit)
+      assignments[0].floors.push(floorGroup)
+      assignments[0].totalCredit += floorGroup.credit
+    })
+
+    setFloorPlan(assignments)
+  }
+
+  async function confirmFloorPlan() {
+    if (!floorPlan) return
+    setAutoAssigning(true)
+
+    const inserts = []
+    floorPlan.forEach((assignment) => {
+      assignment.floors.forEach((floorGroup) => {
+        floorGroup.rooms.forEach((room) => {
+          inserts.push({
+            room_id: room.id,
+            assigned_to: assignment.name,
+            status: 'pending',
+          })
+        })
+      })
+    })
+
+    if (inserts.length > 0) {
+      await supabase.from('housekeeping_tasks').insert(inserts)
+    }
+
+    setFloorPlan(null)
+    setAttendantNames('')
+    setAutoAssigning(false)
+    loadAll()
+  }
+
   const assignedRoomIds = new Set(tasks.map((t) => t.room_id))
 
   const filteredRooms = rooms.filter((r) => {
@@ -178,6 +244,61 @@ export default function HousekeepingPage() {
           })}
         </div>
       )}
+
+      {/* Auto-Assign by Floor */}
+      <div style={{ background: 'white', border: '1px solid #cbd5e1', borderRadius: '6px', marginBottom: '16px' }}>
+        <div style={{ background: '#0f2540', color: 'white', padding: '10px 16px', borderRadius: '6px 6px 0 0', fontSize: '13px', fontWeight: 'bold' }}>
+          Auto-Assign by Floor (whole floors only — no cross-floor splitting)
+        </div>
+        <div style={{ padding: '16px' }}>
+          <label style={{ fontSize: '12px', color: '#64748b', display: 'block', marginBottom: '4px' }}>
+            Attendant names (comma separated)
+          </label>
+          <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
+            <input
+              placeholder="e.g. Mya, Thida, Kyaw, Nilar..."
+              value={attendantNames}
+              onChange={(e) => setAttendantNames(e.target.value)}
+              style={{ ...inputStyle, flex: 1 }}
+            />
+            <button onClick={generateFloorPlan} style={actionBtn('#0f2540')}>Generate Floor Plan</button>
+          </div>
+
+          {floorPlan && (
+            <div style={{ marginTop: '14px' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+                <thead>
+                  <tr style={{ background: '#f1f5f9', textAlign: 'left' }}>
+                    <th style={{ padding: '8px' }}>Attendant</th>
+                    <th style={{ padding: '8px' }}>Assigned Floor(s)</th>
+                    <th style={{ padding: '8px' }}>Rooms</th>
+                    <th style={{ padding: '8px' }}>Total Credit</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {floorPlan.map((a) => (
+                    <tr key={a.name} style={{ borderTop: '1px solid #e2e8f0' }}>
+                      <td style={{ padding: '8px', fontWeight: 'bold' }}>{a.name}</td>
+                      <td style={{ padding: '8px' }}>
+                        {a.floors.length === 0 ? '—' : a.floors.map((f) => `Floor ${f.floor}`).join(', ')}
+                      </td>
+                      <td style={{ padding: '8px' }}>{a.floors.reduce((sum, f) => sum + f.rooms.length, 0)}</td>
+                      <td style={{ padding: '8px' }}>{a.totalCredit.toFixed(1)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+
+              <div style={{ marginTop: '12px', display: 'flex', gap: '10px' }}>
+                <button onClick={confirmFloorPlan} disabled={autoAssigning} style={actionBtn('#16a34a')}>
+                  {autoAssigning ? 'Assigning...' : 'Confirm & Create Tasks'}
+                </button>
+                <button onClick={() => setFloorPlan(null)} style={actionBtn('#6b7280')}>Cancel</button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
 
       {/* Filter Panel - Oracle Opera style */}
       <div style={{ background: 'white', border: '1px solid #cbd5e1', borderRadius: '6px', marginBottom: '16px' }}>
