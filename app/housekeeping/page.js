@@ -81,6 +81,11 @@ export default function HousekeepingPage() {
     loadAll()
   }
 
+  async function cancelTask(taskId) {
+    await supabase.from('housekeeping_tasks').delete().eq('id', taskId)
+    loadAll()
+  }
+
   function toggleRoomSelect(roomId) {
     const next = new Set(selectedRooms)
     if (next.has(roomId)) next.delete(roomId)
@@ -238,6 +243,7 @@ export default function HousekeepingPage() {
                       Mark Complete
                     </button>
                   )}
+                  <button onClick={() => cancelTask(t.id)} style={actionBtn('#dc2626')}>Cancel</button>
                 </div>
               </div>
             )
