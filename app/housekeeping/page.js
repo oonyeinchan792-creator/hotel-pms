@@ -86,6 +86,13 @@ export default function HousekeepingPage() {
     loadAll()
   }
 
+  async function cancelAllTasks() {
+    const taskIds = tasks.map((t) => t.id)
+    if (taskIds.length === 0) return
+    await supabase.from('housekeeping_tasks').delete().in('id', taskIds)
+    loadAll()
+  }
+
   function toggleRoomSelect(roomId) {
     const next = new Set(selectedRooms)
     if (next.has(roomId)) next.delete(roomId)
@@ -222,7 +229,10 @@ export default function HousekeepingPage() {
       {/* Active Tasks */}
       {!loading && tasks.length > 0 && (
         <div style={{ marginBottom: '24px' }}>
-          <h2 style={{ fontSize: '16px', color: '#0f2540' }}>Active Cleaning Tasks</h2>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <h2 style={{ fontSize: '16px', color: '#0f2540', margin: 0 }}>Active Cleaning Tasks</h2>
+            <button onClick={cancelAllTasks} style={actionBtn('#dc2626')}>Cancel All Assignments</button>
+          </div>
           {tasks.map((t) => {
             const style = taskStatusInfo[t.status] || taskStatusInfo.pending
             return (
