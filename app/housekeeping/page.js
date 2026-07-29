@@ -39,6 +39,7 @@ export default function HousekeepingPage() {
   const [autoAssigning, setAutoAssigning] = useState(false)
 
   const [rangeRows, setRangeRows] = useState([{ id: 1, staffName: '', fromRoom: '', toRoom: '' }])
+  const [includeCleanRooms, setIncludeCleanRooms] = useState(false)
 
   async function loadAll() {
     setLoading(true)
@@ -108,8 +109,12 @@ export default function HousekeepingPage() {
   }
 
   function roomsInRange(fromRoom, toRoom) {
-    const dirtyRooms = rooms.filter((r) => r.status === 'vacant_dirty' || r.status === 'occupied_dirty')
-    return dirtyRooms.filter((r) => {
+    const eligibleRooms = rooms.filter((r) => {
+      if (r.status === 'out_of_order') return false
+      if (includeCleanRooms) return true
+      return r.status === 'vacant_dirty' || r.status === 'occupied_dirty'
+    })
+    return eligibleRooms.filter((r) => {
       const num = Number(r.room_number)
       return num >= Number(fromRoom) && num <= Number(toRoom)
     })
@@ -313,6 +318,10 @@ export default function HousekeepingPage() {
           Quick Assignment — e.g. Aung Aung (101–110), Nilar (201–220)
         </div>
         <div style={{ padding: '16px' }}>
+          <label style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px', fontSize: '13px', color: '#0f2540' }}>
+            <input type="checkbox" checked={includeCleanRooms} onChange={(e) => setIncludeCleanRooms(e.target.checked)} />
+            Include Vacant Clean rooms (for touch-up cleaning)
+          </label>
           {rangeRows.map((row) => {
             const preview = row.fromRoom && row.toRoom ? roomsInRange(row.fromRoom, row.toRoom).length : null
             return (
