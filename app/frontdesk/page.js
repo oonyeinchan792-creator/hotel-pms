@@ -8,6 +8,7 @@ export default function FrontDeskPage() {
   const [guests, setGuests] = useState({})
   const [roomTypes, setRoomTypes] = useState({})
   const [availableRooms, setAvailableRooms] = useState({}) // keyed by reservation id
+  const [pendingMsgCounts, setPendingMsgCounts] = useState({}) // keyed by reservation id
   const [loading, setLoading] = useState(true)
   const [message, setMessage] = useState('')
 
@@ -50,6 +51,17 @@ export default function FrontDeskPage() {
       .eq('status', 'checked_in')
       .order('check_out_date')
     setCheckedIn(checkedInData || [])
+
+    // Load pending (undelivered) guest messages, count per reservation
+    const { data: msgData } = await supabase
+      .from('guest_messages')
+      .select('reservation_id')
+      .eq('is_delivered', false)
+    const msgCounts = {}
+    msgData?.forEach((m) => {
+      msgCounts[m.reservation_id] = (msgCounts[m.reservation_id] || 0) + 1
+    })
+    setPendingMsgCounts(msgCounts)
 
     setLoading(false)
   }
@@ -218,6 +230,28 @@ export default function FrontDeskPage() {
             >
               <div>
                 <strong>{guests[r.guest_id] || 'Unknown Guest'}</strong>
+                {pendingMsgCounts[r.id] > 0 && (
+                  <a
+                    href="/frontdesk/messages"
+                    title={`${pendingMsgCounts[r.id]} pending message(s)`}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      marginLeft: '10px',
+                      background: '#fef3c7',
+                      color: '#92400e',
+                      padding: '2px 8px',
+                      borderRadius: '12px',
+                      fontSize: '12px',
+                      fontWeight: 'bold',
+                      textDecoration: 'none',
+                      verticalAlign: 'middle',
+                    }}
+                  >
+                    ✉️ {pendingMsgCounts[r.id]}
+                  </a>
+                )}
                 <div style={{ fontSize: '13px', color: '#6b7280' }}>
                   Room {r.rooms?.room_number || '—'} · Check-out due {r.check_out_date} · Conf# {r.confirmation_number}
                 </div>
