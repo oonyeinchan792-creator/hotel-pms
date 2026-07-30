@@ -121,6 +121,12 @@ export default function FrontDeskPage() {
         <h1>Front Desk</h1>
         <div style={{ display: 'flex', gap: '10px' }}>
           <a
+            href="/frontdesk/wakeup"
+            style={{ background: '#4338ca', color: 'white', padding: '10px 18px', borderRadius: '6px', textDecoration: 'none', fontSize: '13px', fontWeight: 'bold' }}
+          >
+            ⏰ Wakeup Calls
+          </a>
+          <a
             href="/frontdesk/messages"
             style={{ background: '#0891b2', color: 'white', padding: '10px 18px', borderRadius: '6px', textDecoration: 'none', fontSize: '13px', fontWeight: 'bold' }}
           >
