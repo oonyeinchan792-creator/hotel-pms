@@ -119,7 +119,13 @@ export default function FrontDeskPage() {
       <a href="/" style={{ color: '#2563eb' }}>&larr; Back to Dashboard</a>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <h1>Front Desk</h1>
-        <div style={{ display: 'flex', gap: '10px' }}>
+        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+          <a
+            href="/frontdesk/inhouse"
+            style={{ background: '#16a34a', color: 'white', padding: '10px 18px', borderRadius: '6px', textDecoration: 'none', fontSize: '13px', fontWeight: 'bold' }}
+          >
+            🏠 In-House Guests
+          </a>
           <a
             href="/frontdesk/wakeup"
             style={{ background: '#4338ca', color: 'white', padding: '10px 18px', borderRadius: '6px', textDecoration: 'none', fontSize: '13px', fontWeight: 'bold' }}
