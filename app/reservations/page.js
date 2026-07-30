@@ -30,7 +30,7 @@ export default function ReservationsPage() {
 
       const { data: resData } = await supabase
         .from('reservations')
-        .select('*')
+        .select('*, rooms(room_number)')
         .order('check_in_date', { ascending: true })
       setReservations(resData || [])
       setLoading(false)
@@ -71,6 +71,7 @@ export default function ReservationsPage() {
               <th style={{ padding: '12px' }}>Confirmation #</th>
               <th style={{ padding: '12px' }}>Guest</th>
               <th style={{ padding: '12px' }}>Room Type</th>
+              <th style={{ padding: '12px' }}>Room</th>
               <th style={{ padding: '12px' }}>Check-in</th>
               <th style={{ padding: '12px' }}>Check-out</th>
               <th style={{ padding: '12px' }}>Status</th>
@@ -84,6 +85,7 @@ export default function ReservationsPage() {
                   <td style={{ padding: '12px', fontFamily: 'monospace' }}>{r.confirmation_number}</td>
                   <td style={{ padding: '12px' }}>{guests[r.guest_id] || 'Unknown'}</td>
                   <td style={{ padding: '12px' }}>{roomTypes[r.room_type_id] || ''}</td>
+                  <td style={{ padding: '12px', fontWeight: 'bold' }}>{r.rooms?.room_number || '—'}</td>
                   <td style={{ padding: '12px' }}>{r.check_in_date}</td>
                   <td style={{ padding: '12px' }}>{r.check_out_date}</td>
                   <td style={{ padding: '12px' }}>
