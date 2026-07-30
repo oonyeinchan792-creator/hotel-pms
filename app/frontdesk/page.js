@@ -109,6 +109,12 @@ export default function FrontDeskPage() {
         <h1>Front Desk</h1>
         <div style={{ display: 'flex', gap: '10px' }}>
           <a
+            href="/frontdesk/messages"
+            style={{ background: '#0891b2', color: 'white', padding: '10px 18px', borderRadius: '6px', textDecoration: 'none', fontSize: '13px', fontWeight: 'bold' }}
+          >
+            ✉️ Guest Messages
+          </a>
+          <a
             href="/frontdesk/roommove"
             style={{ background: '#7c3aed', color: 'white', padding: '10px 18px', borderRadius: '6px', textDecoration: 'none', fontSize: '13px', fontWeight: 'bold' }}
           >
