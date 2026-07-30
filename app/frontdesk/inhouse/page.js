@@ -112,6 +112,7 @@ export default function InHousePage() {
                   </td>
                   <td style={{ padding: '12px' }}>{nightsLeft}</td>
                   <td style={{ padding: '12px' }}>
+                    <a href={`/frontdesk/regcard/${r.id}`} style={{ color: '#7c3aed', fontSize: '12px', fontWeight: 'bold', marginRight: '10px' }}>Reg Card &rarr;</a>
                     <a href="/billing" style={{ color: '#2563eb', fontSize: '12px', fontWeight: 'bold' }}>Folio &rarr;</a>
                   </td>
                 </tr>
