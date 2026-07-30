@@ -294,12 +294,20 @@ export default function HousekeepingPage() {
           <h1 style={{ color: '#0f2540', fontSize: '22px', marginBottom: '4px' }}>Housekeeping — Task Assignment</h1>
           <p style={{ color: '#64748b', marginTop: 0, fontSize: '14px' }}>Filter rooms and assign cleaning tasks in bulk</p>
         </div>
-        <a
-          href="/housekeeping/print"
-          style={{ background: '#0f2540', color: 'white', padding: '10px 18px', borderRadius: '6px', textDecoration: 'none', fontSize: '13px', fontWeight: 'bold' }}
-        >
-          🖨️ Print Assignment Sheet
-        </a>
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <a
+            href="/housekeeping/task-sheet"
+            style={{ background: '#0d9488', color: 'white', padding: '10px 18px', borderRadius: '6px', textDecoration: 'none', fontSize: '13px', fontWeight: 'bold' }}
+          >
+            📊 Task Sheet Grid
+          </a>
+          <a
+            href="/housekeeping/print"
+            style={{ background: '#0f2540', color: 'white', padding: '10px 18px', borderRadius: '6px', textDecoration: 'none', fontSize: '13px', fontWeight: 'bold' }}
+          >
+            🖨️ Print Assignment Sheet
+          </a>
+        </div>
       </div>
 
       <div style={{ display: 'flex', gap: '14px', marginBottom: '20px', marginTop: '20px', flexWrap: 'wrap' }}>
