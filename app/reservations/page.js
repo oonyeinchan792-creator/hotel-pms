@@ -43,19 +43,34 @@ export default function ReservationsPage() {
       <a href="/" style={{ color: '#2563eb' }}>&larr; Back to Dashboard</a>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px' }}>
         <h1>Reservations</h1>
-        <a
-          href="/reservations/new"
-          style={{
-            background: '#16a34a',
-            color: 'white',
-            padding: '12px 20px',
-            borderRadius: '8px',
-            textDecoration: 'none',
-            fontWeight: 'bold',
-          }}
-        >
-          + New Reservation
-        </a>
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <a
+            href="/reservations/availability"
+            style={{
+              background: '#0d9488',
+              color: 'white',
+              padding: '12px 20px',
+              borderRadius: '8px',
+              textDecoration: 'none',
+              fontWeight: 'bold',
+            }}
+          >
+            📅 Check Availability
+          </a>
+          <a
+            href="/reservations/new"
+            style={{
+              background: '#16a34a',
+              color: 'white',
+              padding: '12px 20px',
+              borderRadius: '8px',
+              textDecoration: 'none',
+              fontWeight: 'bold',
+            }}
+          >
+            + New Reservation
+          </a>
+        </div>
       </div>
 
       {loading && <p>Loading...</p>}
