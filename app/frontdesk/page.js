@@ -105,7 +105,15 @@ export default function FrontDeskPage() {
   return (
     <main style={{ padding: '40px' }}>
       <a href="/" style={{ color: '#2563eb' }}>&larr; Back to Dashboard</a>
-      <h1>Front Desk</h1>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <h1>Front Desk</h1>
+        <a
+          href="/frontdesk/walkin"
+          style={{ background: '#d97706', color: 'white', padding: '10px 18px', borderRadius: '6px', textDecoration: 'none', fontSize: '13px', fontWeight: 'bold' }}
+        >
+          + Walk-In Check-In
+        </a>
+      </div>
 
       {message && (
         <p style={{ background: '#fef3c7', padding: '10px 14px', borderRadius: '6px', color: '#92400e' }}>
