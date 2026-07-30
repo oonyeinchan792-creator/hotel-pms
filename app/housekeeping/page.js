@@ -29,8 +29,16 @@ export default function HousekeepingPage() {
     fromRoom: '',
     toRoom: '',
     floor: '',
-    statusFilter: 'needs_attention',
   })
+
+  const [roomStatusCheck, setRoomStatusCheck] = useState({
+    dirty: true,
+    clean: true,
+    inspected: true,
+    ooo: true,
+    oos: true,
+  })
+  const [foStatusCheck, setFoStatusCheck] = useState({ vacant: true, occupied: true })
 
   const [selectedRooms, setSelectedRooms] = useState(new Set())
   const [assignStaff, setAssignStaff] = useState('')
@@ -241,17 +249,33 @@ export default function HousekeepingPage() {
 
   const assignedRoomIds = new Set(tasks.map((t) => t.room_id))
 
+  function getCleanType(status) {
+    if (status === 'vacant_dirty' || status === 'occupied_dirty') return 'dirty'
+    if (status === 'vacant_clean' || status === 'occupied_clean') return 'clean'
+    if (status === 'vacant_inspected') return 'inspected'
+    if (status === 'out_of_order') return 'ooo'
+    if (status === 'out_of_service') return 'oos'
+    return null
+  }
+
+  function getOccupancy(status) {
+    if (status.startsWith('vacant')) return 'vacant'
+    if (status.startsWith('occupied')) return 'occupied'
+    return null
+  }
+
   const filteredRooms = rooms.filter((r) => {
     if (filters.roomType && r.room_type_id !== filters.roomType) return false
     if (filters.floor && r.floor !== filters.floor) return false
     if (filters.fromRoom && Number(r.room_number) < Number(filters.fromRoom)) return false
     if (filters.toRoom && Number(r.room_number) > Number(filters.toRoom)) return false
-    if (filters.statusFilter === 'needs_attention') {
-      return r.status === 'vacant_dirty' || r.status === 'occupied_dirty'
-    }
-    if (filters.statusFilter === 'vacant_inspected') return r.status === 'vacant_inspected'
-    if (filters.statusFilter === 'out_of_order') return r.status === 'out_of_order'
-    if (filters.statusFilter === 'out_of_service') return r.status === 'out_of_service'
+
+    const cleanType = getCleanType(r.status)
+    if (cleanType && !roomStatusCheck[cleanType]) return false
+
+    const occupancy = getOccupancy(r.status)
+    if (occupancy && !foStatusCheck[occupancy]) return false
+
     return true
   })
 
@@ -442,54 +466,90 @@ export default function HousekeepingPage() {
         </div>
       </div>
 
-      {/* Filter Panel - Oracle Opera style */}
+      {/* Filter Panel - Oracle Opera style with checkbox groups */}
       <div style={{ background: 'white', border: '1px solid #cbd5e1', borderRadius: '6px', marginBottom: '16px' }}>
         <div style={{ background: '#0f2540', color: 'white', padding: '10px 16px', borderRadius: '6px 6px 0 0', fontSize: '13px', fontWeight: 'bold' }}>
           Filter
         </div>
-        <div style={{ padding: '16px', display: 'flex', gap: '16px', flexWrap: 'wrap', alignItems: 'flex-end' }}>
-          <div>
-            <label style={{ fontSize: '12px', color: '#64748b', display: 'block', marginBottom: '4px' }}>Room Type</label>
-            <select style={inputStyle} value={filters.roomType} onChange={(e) => setFilters({ ...filters, roomType: e.target.value })}>
-              <option value="">All Types</option>
-              {Object.entries(roomTypes).map(([id, name]) => (
-                <option key={id} value={id}>{name}</option>
+        <div style={{ padding: '16px', display: 'flex', gap: '24px', flexWrap: 'wrap' }}>
+
+          {/* Room Status checkboxes */}
+          <div style={{ border: '1px solid #d97706', borderRadius: '6px', padding: '10px 14px' }}>
+            <div style={{ fontSize: '12px', fontWeight: 'bold', color: '#92400e', marginBottom: '6px' }}>Room Status</div>
+            <div style={{ display: 'flex', gap: '14px', flexWrap: 'wrap' }}>
+              {[
+                { key: 'clean', label: 'Clean', color: '#16a34a' },
+                { key: 'dirty', label: 'Dirty', color: '#dc2626' },
+                { key: 'inspected', label: 'Inspected', color: '#0d9488' },
+                { key: 'ooo', label: 'Out of Order', color: '#6b7280' },
+                { key: 'oos', label: 'Out of Service', color: '#1f2937' },
+              ].map((item) => (
+                <label key={item.key} style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '13px', color: item.color, fontWeight: 'bold' }}>
+                  <input
+                    type="checkbox"
+                    checked={roomStatusCheck[item.key]}
+                    onChange={(e) => setRoomStatusCheck({ ...roomStatusCheck, [item.key]: e.target.checked })}
+                  />
+                  {item.label}
+                </label>
               ))}
-            </select>
+            </div>
           </div>
-          <div>
-            <label style={{ fontSize: '12px', color: '#64748b', display: 'block', marginBottom: '4px' }}>From Room</label>
-            <input style={{ ...inputStyle, width: '90px' }} value={filters.fromRoom} onChange={(e) => setFilters({ ...filters, fromRoom: e.target.value })} placeholder="101" />
+
+          {/* FO Status checkboxes */}
+          <div style={{ border: '1px solid #d97706', borderRadius: '6px', padding: '10px 14px' }}>
+            <div style={{ fontSize: '12px', fontWeight: 'bold', color: '#92400e', marginBottom: '6px' }}>FO Status</div>
+            <div style={{ display: 'flex', gap: '14px' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '13px' }}>
+                <input type="checkbox" checked={foStatusCheck.vacant} onChange={(e) => setFoStatusCheck({ ...foStatusCheck, vacant: e.target.checked })} />
+                Vacant
+              </label>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '13px' }}>
+                <input type="checkbox" checked={foStatusCheck.occupied} onChange={(e) => setFoStatusCheck({ ...foStatusCheck, occupied: e.target.checked })} />
+                Occupied
+              </label>
+            </div>
           </div>
-          <div>
-            <label style={{ fontSize: '12px', color: '#64748b', display: 'block', marginBottom: '4px' }}>To Room</label>
-            <input style={{ ...inputStyle, width: '90px' }} value={filters.toRoom} onChange={(e) => setFilters({ ...filters, toRoom: e.target.value })} placeholder="2010" />
+
+          {/* Room/Floor filters */}
+          <div style={{ display: 'flex', gap: '14px', alignItems: 'flex-end', flexWrap: 'wrap' }}>
+            <div>
+              <label style={{ fontSize: '12px', color: '#64748b', display: 'block', marginBottom: '4px' }}>Room Type</label>
+              <select style={inputStyle} value={filters.roomType} onChange={(e) => setFilters({ ...filters, roomType: e.target.value })}>
+                <option value="">All Types</option>
+                {Object.entries(roomTypes).map(([id, name]) => (
+                  <option key={id} value={id}>{name}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label style={{ fontSize: '12px', color: '#64748b', display: 'block', marginBottom: '4px' }}>From Room</label>
+              <input style={{ ...inputStyle, width: '90px' }} value={filters.fromRoom} onChange={(e) => setFilters({ ...filters, fromRoom: e.target.value })} placeholder="101" />
+            </div>
+            <div>
+              <label style={{ fontSize: '12px', color: '#64748b', display: 'block', marginBottom: '4px' }}>To Room</label>
+              <input style={{ ...inputStyle, width: '90px' }} value={filters.toRoom} onChange={(e) => setFilters({ ...filters, toRoom: e.target.value })} placeholder="2010" />
+            </div>
+            <div>
+              <label style={{ fontSize: '12px', color: '#64748b', display: 'block', marginBottom: '4px' }}>Floor</label>
+              <select style={inputStyle} value={filters.floor} onChange={(e) => setFilters({ ...filters, floor: e.target.value })}>
+                <option value="">All Floors</option>
+                {floorOptions.map((f) => (
+                  <option key={f} value={f}>Floor {f}</option>
+                ))}
+              </select>
+            </div>
+            <button
+              onClick={() => {
+                setFilters({ roomType: '', fromRoom: '', toRoom: '', floor: '' })
+                setRoomStatusCheck({ dirty: true, clean: true, inspected: true, ooo: true, oos: true })
+                setFoStatusCheck({ vacant: true, occupied: true })
+              }}
+              style={{ ...actionBtn('#e2e8f0'), color: '#0f2540' }}
+            >
+              Clear
+            </button>
           </div>
-          <div>
-            <label style={{ fontSize: '12px', color: '#64748b', display: 'block', marginBottom: '4px' }}>Floor</label>
-            <select style={inputStyle} value={filters.floor} onChange={(e) => setFilters({ ...filters, floor: e.target.value })}>
-              <option value="">All Floors</option>
-              {floorOptions.map((f) => (
-                <option key={f} value={f}>Floor {f}</option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label style={{ fontSize: '12px', color: '#64748b', display: 'block', marginBottom: '4px' }}>Status</label>
-            <select style={inputStyle} value={filters.statusFilter} onChange={(e) => setFilters({ ...filters, statusFilter: e.target.value })}>
-              <option value="needs_attention">Needs Cleaning</option>
-              <option value="vacant_inspected">Inspected</option>
-              <option value="out_of_order">Out of Order</option>
-              <option value="out_of_service">Out of Service</option>
-              <option value="all">All Rooms</option>
-            </select>
-          </div>
-          <button
-            onClick={() => setFilters({ roomType: '', fromRoom: '', toRoom: '', floor: '', statusFilter: 'needs_attention' })}
-            style={{ ...actionBtn('#e2e8f0'), color: '#0f2540' }}
-          >
-            Clear
-          </button>
         </div>
       </div>
 
@@ -525,51 +585,64 @@ export default function HousekeepingPage() {
               <th style={{ padding: '10px' }}>Room</th>
               <th style={{ padding: '10px' }}>Floor</th>
               <th style={{ padding: '10px' }}>Room Type</th>
-              <th style={{ padding: '10px' }}>Status</th>
+              <th style={{ padding: '10px' }}>Room Status</th>
               <th style={{ padding: '10px' }}>Task</th>
-              <th style={{ padding: '10px' }}>Actions</th>
             </tr>
           </thead>
           <tbody>
             {filteredRooms.map((room) => {
-              const info = statusInfo[room.status] || { bg: '#9ca3af', label: room.status }
+              const cleanType = getCleanType(room.status)
               const hasTask = assignedRoomIds.has(room.id)
+
+              const rowBg = {
+                dirty: '#fee2e2',
+                clean: '#cffafe',
+                inspected: '#d1fae5',
+                ooo: '#e5e7eb',
+                oos: '#d1d5db',
+              }[cleanType] || 'white'
+
+              const textColor = {
+                dirty: '#991b1b',
+                clean: '#0e7490',
+                inspected: '#065f46',
+                ooo: '#374151',
+                oos: '#1f2937',
+              }[cleanType] || '#111827'
+
               return (
-                <tr key={room.id} style={{ borderTop: '1px solid #e2e8f0', fontSize: '13px' }}>
+                <tr key={room.id} style={{ borderTop: '1px solid #e2e8f0', fontSize: '13px', background: rowBg }}>
                   <td style={{ padding: '10px' }}>
                     <input type="checkbox" checked={selectedRooms.has(room.id)} onChange={() => toggleRoomSelect(room.id)} />
                   </td>
-                  <td style={{ padding: '10px', fontWeight: 'bold' }}>{room.room_number}</td>
-                  <td style={{ padding: '10px' }}>{room.floor}</td>
-                  <td style={{ padding: '10px' }}>{roomTypes[room.room_type_id]}</td>
+                  <td style={{ padding: '10px', fontWeight: 'bold', color: textColor }}>{room.room_number}</td>
+                  <td style={{ padding: '10px', color: textColor }}>{room.floor}</td>
+                  <td style={{ padding: '10px', color: textColor }}>{roomTypes[room.room_type_id]}</td>
                   <td style={{ padding: '10px' }}>
-                    <span style={{ background: info.bg, color: 'white', padding: '3px 8px', borderRadius: '10px', fontSize: '11px' }}>
-                      {info.label}
-                    </span>
+                    <select
+                      value={room.status}
+                      onChange={(e) => updateStatus(room.id, e.target.value)}
+                      style={{
+                        padding: '5px 8px',
+                        borderRadius: '4px',
+                        border: '1px solid #94a3b8',
+                        fontWeight: 'bold',
+                        color: textColor,
+                        background: 'white',
+                        fontSize: '12px',
+                      }}
+                    >
+                      <option value="vacant_dirty">Vacant Dirty</option>
+                      <option value="vacant_clean">Vacant Clean</option>
+                      <option value="vacant_inspected">Vacant Inspected</option>
+                      <option value="occupied_dirty">Occupied Dirty</option>
+                      <option value="occupied_clean">Occupied Clean</option>
+                      <option value="out_of_order">Out of Order</option>
+                      <option value="out_of_service">Out of Service</option>
+                    </select>
                   </td>
-                  <td style={{ padding: '10px', color: hasTask ? '#d97706' : '#9ca3af', fontSize: '12px' }}>
+                  <td style={{ padding: '10px', color: hasTask ? '#d97706' : '#9ca3af', fontSize: '12px', fontWeight: hasTask ? 'bold' : 'normal' }}>
                     {hasTask ? 'Assigned' : '—'}
-                  </td>
-                  <td style={{ padding: '10px', display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                    {(room.status === 'vacant_dirty' || room.status === 'occupied_dirty') && (
-                      <button onClick={() => updateStatus(room.id, room.status === 'vacant_dirty' ? 'vacant_clean' : 'occupied_clean')} style={actionBtn('#16a34a')}>
-                        Mark Clean
-                      </button>
-                    )}
-                    {room.status === 'vacant_clean' && (
-                      <button onClick={() => updateStatus(room.id, 'vacant_inspected')} style={actionBtn('#0d9488')}>
-                        Inspect
-                      </button>
-                    )}
-                    {room.status !== 'out_of_order' && room.status !== 'out_of_service' && (
-                      <button onClick={() => updateStatus(room.id, 'out_of_order')} style={actionBtn('#6b7280')}>OOO</button>
-                    )}
-                    {room.status !== 'out_of_service' && room.status !== 'out_of_order' && (
-                      <button onClick={() => updateStatus(room.id, 'out_of_service')} style={actionBtn('#1f2937')}>OOS</button>
-                    )}
-                    {(room.status === 'out_of_order' || room.status === 'out_of_service') && (
-                      <button onClick={() => updateStatus(room.id, 'vacant_dirty')} style={actionBtn('#2563eb')}>Return to Service</button>
-                    )}
                   </td>
                 </tr>
               )
