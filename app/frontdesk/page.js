@@ -218,6 +218,24 @@ export default function FrontDeskPage() {
                 >
                   Check In
                 </button>
+                {(availableRooms[r.id] || []).length > 0 && (
+                  <button
+                    onClick={() => handleCheckIn(r.id, availableRooms[r.id][0].id)}
+                    title="Auto-assigns the first available room and checks in immediately"
+                    style={{
+                      background: '#16a34a',
+                      color: 'white',
+                      border: 'none',
+                      padding: '10px 14px',
+                      borderRadius: '6px',
+                      fontWeight: 'bold',
+                      cursor: 'pointer',
+                      fontSize: '12px',
+                    }}
+                  >
+                    ⚡ Express Check-In
+                  </button>
+                )}
               </div>
             </div>
           ))}
