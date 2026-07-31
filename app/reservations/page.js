@@ -45,6 +45,19 @@ export default function ReservationsPage() {
         <h1>Reservations</h1>
         <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
           <a
+            href="/reservations/group"
+            style={{
+              background: '#7c3aed',
+              color: 'white',
+              padding: '12px 20px',
+              borderRadius: '8px',
+              textDecoration: 'none',
+              fontWeight: 'bold',
+            }}
+          >
+            👥 Group Reservations
+          </a>
+          <a
             href="/reservations/waitlist"
             style={{
               background: '#d97706',
