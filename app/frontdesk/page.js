@@ -121,6 +121,12 @@ export default function FrontDeskPage() {
         <h1>Front Desk</h1>
         <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
           <a
+            href="/frontdesk/queue"
+            style={{ background: '#d97706', color: 'white', padding: '10px 18px', borderRadius: '6px', textDecoration: 'none', fontSize: '13px', fontWeight: 'bold' }}
+          >
+            ⏳ Queue Rooms
+          </a>
+          <a
             href="/frontdesk/inhouse"
             style={{ background: '#16a34a', color: 'white', padding: '10px 18px', borderRadius: '6px', textDecoration: 'none', fontSize: '13px', fontWeight: 'bold' }}
           >
