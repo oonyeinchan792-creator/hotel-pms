@@ -7,8 +7,10 @@ export default function InHousePage() {
   const [guests, setGuests] = useState({})
   const [roomTypes, setRoomTypes] = useState({})
   const [pendingMsgCounts, setPendingMsgCounts] = useState({})
+  const [keyCardCounts, setKeyCardCounts] = useState({})
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
+  const [issuingCard, setIssuingCard] = useState(null)
 
   async function loadAll() {
     setLoading(true)
@@ -35,7 +37,23 @@ export default function InHousePage() {
     msgData?.forEach((m) => { msgCounts[m.reservation_id] = (msgCounts[m.reservation_id] || 0) + 1 })
     setPendingMsgCounts(msgCounts)
 
+    const { data: cardData } = await supabase.from('key_card_log').select('reservation_id')
+    const cardCounts = {}
+    cardData?.forEach((c) => { cardCounts[c.reservation_id] = (cardCounts[c.reservation_id] || 0) + 1 })
+    setKeyCardCounts(cardCounts)
+
     setLoading(false)
+  }
+
+  async function issueKeyCard(reservationId, roomId) {
+    setIssuingCard(reservationId)
+    await supabase.from('key_card_log').insert({
+      reservation_id: reservationId,
+      room_id: roomId,
+      reason: 're-issue',
+    })
+    setIssuingCard(null)
+    loadAll()
   }
 
   useEffect(() => {
@@ -112,6 +130,14 @@ export default function InHousePage() {
                   </td>
                   <td style={{ padding: '12px' }}>{nightsLeft}</td>
                   <td style={{ padding: '12px' }}>
+                    <button
+                      onClick={() => issueKeyCard(r.id, r.room_id)}
+                      disabled={issuingCard === r.id}
+                      title={keyCardCounts[r.id] ? `${keyCardCounts[r.id]} card(s) issued so far` : 'No cards issued yet'}
+                      style={{ background: '#eab308', color: '#78350f', border: 'none', padding: '5px 10px', borderRadius: '5px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer', marginRight: '10px' }}
+                    >
+                      🔑 {keyCardCounts[r.id] || 0}
+                    </button>
                     <a href={`/frontdesk/regcard/${r.id}`} style={{ color: '#7c3aed', fontSize: '12px', fontWeight: 'bold', marginRight: '10px' }}>Reg Card &rarr;</a>
                     <a href="/billing" style={{ color: '#2563eb', fontSize: '12px', fontWeight: 'bold' }}>Folio &rarr;</a>
                   </td>
