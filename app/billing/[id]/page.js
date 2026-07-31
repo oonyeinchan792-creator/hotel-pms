@@ -18,6 +18,10 @@ export default function FolioDetailPage() {
     amount: '',
   })
 
+  const [companies, setCompanies] = useState([])
+  const [selectedCompany, setSelectedCompany] = useState('')
+  const [transferMsg, setTransferMsg] = useState('')
+
   async function loadAll() {
     setLoading(true)
 
@@ -58,6 +62,9 @@ export default function FolioDetailPage() {
         .order('transaction_date', { ascending: true })
       setTransactions(txnData || [])
     }
+
+    const { data: companyData } = await supabase.from('companies').select('*').order('name')
+    setCompanies(companyData || [])
 
     setLoading(false)
   }
@@ -107,6 +114,38 @@ export default function FolioDetailPage() {
     return sum + Number(t.amount) // charge, tax, refund all increase balance owed
   }, 0)
 
+  async function transferToCityLedger() {
+    setTransferMsg('')
+    if (!selectedCompany) {
+      setTransferMsg('Please select a company first.')
+      return
+    }
+    if (balance <= 0) {
+      setTransferMsg('No outstanding balance to transfer.')
+      return
+    }
+
+    // 1. Charge the company account
+    await supabase.from('city_ledger_transactions').insert({
+      company_id: selectedCompany,
+      reservation_id: reservation.id,
+      description: `Folio ${folio.folio_number} — ${guest?.first_name} ${guest?.last_name} — Room ${reservation.rooms?.room_number || ''}`,
+      amount: balance,
+      transaction_type: 'charge',
+    })
+
+    // 2. Settle the folio balance with a payment marked "Transferred to City Ledger"
+    await supabase.from('folio_transactions').insert({
+      folio_id: folio.id,
+      transaction_type: 'payment',
+      description: 'Transferred to City Ledger',
+      amount: balance,
+    })
+
+    setTransferMsg('Balance transferred to City Ledger successfully.')
+    loadAll()
+  }
+
   if (loading) return <main style={{ padding: '40px' }}>Loading...</main>
   if (!reservation) return <main style={{ padding: '40px' }}>Reservation not found.</main>
 
@@ -140,6 +179,24 @@ export default function FolioDetailPage() {
           <div style={{ color: balance > 0 ? '#dc2626' : '#16a34a' }}>{balance.toLocaleString()} MMK</div>
         </div>
       </div>
+
+      {companies.length > 0 && balance > 0 && (
+        <div style={{ background: '#f0fdfa', border: '1px solid #99f6e4', borderRadius: '8px', padding: '16px', marginBottom: '20px' }}>
+          <h4 style={{ marginTop: 0, marginBottom: '10px', color: '#0f766e' }}>Transfer to City Ledger</h4>
+          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+            <select value={selectedCompany} onChange={(e) => setSelectedCompany(e.target.value)} style={{ padding: '10px', borderRadius: '6px', border: '1px solid #d1d5db', flex: '1 1 200px' }}>
+              <option value="">Select company / travel agent</option>
+              {companies.map((c) => (
+                <option key={c.id} value={c.id}>{c.name}</option>
+              ))}
+            </select>
+            <button onClick={transferToCityLedger} style={{ background: '#0f766e', color: 'white', border: 'none', padding: '10px 18px', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer' }}>
+              Transfer {balance.toLocaleString()} MMK
+            </button>
+          </div>
+          {transferMsg && <p style={{ fontSize: '13px', color: '#0f766e', marginTop: '8px' }}>{transferMsg}</p>}
+        </div>
+      )}
 
       <div style={{ background: 'white', borderRadius: '8px', padding: '20px' }}>
         <h3 style={{ marginTop: 0 }}>Add Transaction</h3>
