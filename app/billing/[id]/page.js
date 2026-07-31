@@ -101,7 +101,10 @@ export default function FolioDetailPage() {
   }
 
   const balance = transactions.reduce((sum, t) => {
-    return sum + (t.transaction_type === 'payment' ? -Number(t.amount) : Number(t.amount))
+    if (t.transaction_type === 'payment' || t.transaction_type === 'deposit' || t.transaction_type === 'discount') {
+      return sum - Number(t.amount)
+    }
+    return sum + Number(t.amount) // charge, tax, refund all increase balance owed
   }, 0)
 
   if (loading) return <main style={{ padding: '40px' }}>Loading...</main>
@@ -126,8 +129,8 @@ export default function FolioDetailPage() {
               <div>{t.description}</div>
               <div style={{ fontSize: '12px', color: '#9ca3af' }}>{new Date(t.transaction_date).toLocaleString()}</div>
             </div>
-            <div style={{ fontWeight: 'bold', color: t.transaction_type === 'payment' ? '#16a34a' : '#111827' }}>
-              {t.transaction_type === 'payment' ? '-' : ''}{Number(t.amount).toLocaleString()} MMK
+            <div style={{ fontWeight: 'bold', color: (t.transaction_type === 'payment' || t.transaction_type === 'deposit' || t.transaction_type === 'discount') ? '#16a34a' : '#111827' }}>
+              {(t.transaction_type === 'payment' || t.transaction_type === 'deposit' || t.transaction_type === 'discount') ? '-' : ''}{Number(t.amount).toLocaleString()} MMK
             </div>
           </div>
         ))}
@@ -144,9 +147,17 @@ export default function FolioDetailPage() {
         <button
           type="button"
           onClick={addRoomCharge}
-          style={{ marginBottom: '14px', background: '#f3f4f6', border: '1px solid #d1d5db', padding: '8px 14px', borderRadius: '6px', cursor: 'pointer' }}
+          style={{ marginBottom: '14px', marginRight: '10px', background: '#f3f4f6', border: '1px solid #d1d5db', padding: '8px 14px', borderRadius: '6px', cursor: 'pointer' }}
         >
           + Quick Add: Room Charge
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setForm({ transaction_type: 'deposit', description: 'Advance Deposit', amount: '' })}
+          style={{ marginBottom: '14px', background: '#f3f4f6', border: '1px solid #d1d5db', padding: '8px 14px', borderRadius: '6px', cursor: 'pointer' }}
+        >
+          + Quick Add: Advance Deposit
         </button>
 
         <form onSubmit={addTransaction}>
@@ -158,6 +169,8 @@ export default function FolioDetailPage() {
             >
               <option value="charge">Charge</option>
               <option value="payment">Payment</option>
+              <option value="deposit">Advance Deposit</option>
+              <option value="refund">Refund</option>
               <option value="tax">Tax</option>
               <option value="discount">Discount</option>
             </select>
