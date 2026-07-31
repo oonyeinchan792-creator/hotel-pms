@@ -1,9 +1,9 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '../../../lib/supabase'
 
-export default function NewReservationPage() {
+function NewReservationForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [roomTypes, setRoomTypes] = useState([])
@@ -237,5 +237,13 @@ export default function NewReservationPage() {
         </button>
       </form>
     </main>
+  )
+}
+
+export default function NewReservationPage() {
+  return (
+    <Suspense fallback={<main style={{ padding: '30px' }}>Loading...</main>}>
+      <NewReservationForm />
+    </Suspense>
   )
 }
