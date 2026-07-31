@@ -55,7 +55,17 @@ export default function BillingPage() {
   return (
     <main style={{ padding: '40px' }}>
       <a href="/" style={{ color: '#2563eb' }}>&larr; Back to Dashboard</a>
-      <h1>Billing / Folios</h1>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <h1>Billing / Folios</h1>
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <a href="/cityledger" style={{ background: '#0f766e', color: 'white', padding: '10px 18px', borderRadius: '6px', textDecoration: 'none', fontSize: '13px', fontWeight: 'bold' }}>
+            🏢 City Ledger
+          </a>
+          <a href="/currency" style={{ background: '#b45309', color: 'white', padding: '10px 18px', borderRadius: '6px', textDecoration: 'none', fontSize: '13px', fontWeight: 'bold' }}>
+            💱 Currency Exchange
+          </a>
+        </div>
+      </div>
 
       {loading && <p>Loading...</p>}
       {!loading && reservations.length === 0 && (
