@@ -43,7 +43,20 @@ export default function ReservationsPage() {
       <a href="/" style={{ color: '#2563eb' }}>&larr; Back to Dashboard</a>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px' }}>
         <h1>Reservations</h1>
-        <div style={{ display: 'flex', gap: '10px' }}>
+        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+          <a
+            href="/reservations/waitlist"
+            style={{
+              background: '#d97706',
+              color: 'white',
+              padding: '12px 20px',
+              borderRadius: '8px',
+              textDecoration: 'none',
+              fontWeight: 'bold',
+            }}
+          >
+            ⏳ Waiting List
+          </a>
           <a
             href="/reservations/availability"
             style={{
