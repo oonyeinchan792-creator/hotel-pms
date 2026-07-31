@@ -1,11 +1,14 @@
 'use client'
 import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '../../../lib/supabase'
 
 export default function NewReservationPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [roomTypes, setRoomTypes] = useState([])
+  const [companies, setCompanies] = useState([])
+  const [packages, setPackages] = useState([])
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
@@ -14,18 +17,26 @@ export default function NewReservationPage() {
     last_name: '',
     email: '',
     phone: '',
-    room_type_id: '',
-    check_in_date: '',
-    check_out_date: '',
+    room_type_id: searchParams.get('room_type_id') || '',
+    check_in_date: searchParams.get('check_in') || '',
+    check_out_date: searchParams.get('check_out') || '',
     adults: 1,
     children: 0,
     source: 'walk-in',
+    company_id: '',
+    package_id: '',
   })
 
   useEffect(() => {
     async function loadTypes() {
       const { data } = await supabase.from('room_types').select('*').order('base_rate')
       setRoomTypes(data || [])
+
+      const { data: companyData } = await supabase.from('companies').select('*').order('name')
+      setCompanies(companyData || [])
+
+      const { data: packageData } = await supabase.from('packages').select('*').eq('is_active', true).order('name')
+      setPackages(packageData || [])
     }
     loadTypes()
   }, [])
@@ -76,6 +87,8 @@ export default function NewReservationPage() {
       adults: form.adults,
       children: form.children,
       source: form.source,
+      company_id: form.company_id || null,
+      package_id: form.package_id || null,
       status: 'reserved',
     })
 
@@ -170,6 +183,35 @@ export default function NewReservationPage() {
             <option value="phone">Phone</option>
             <option value="website">Website</option>
             <option value="ota">OTA (Booking.com, Agoda, etc.)</option>
+            <option value="company">Company</option>
+            <option value="travel_agent">Travel Agent</option>
+          </select>
+        </div>
+
+        {(form.source === 'company' || form.source === 'travel_agent') && (
+          <div style={fieldWrap}>
+            <label style={labelStyle}>{form.source === 'company' ? 'Company' : 'Travel Agent'} (bills to City Ledger)</label>
+            <select style={inputStyle} value={form.company_id} onChange={(e) => updateField('company_id', e.target.value)}>
+              <option value="">Select {form.source === 'company' ? 'company' : 'travel agent'}</option>
+              {companies
+                .filter((c) => (form.source === 'company' ? c.type === 'company' : c.type === 'travel_agent'))
+                .map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+            </select>
+            {companies.length === 0 && (
+              <p style={{ fontSize: '12px', color: '#dc2626', marginTop: '4px' }}>
+                No companies set up yet. Add one in City Ledger first.
+              </p>
+            )}
+          </div>
+        )}
+
+        <div style={fieldWrap}>
+          <label style={labelStyle}>Package (optional)</label>
+          <select style={inputStyle} value={form.package_id} onChange={(e) => updateField('package_id', e.target.value)}>
+            <option value="">No package</option>
+            {packages.map((p) => (
+              <option key={p.id} value={p.id}>{p.name} (+{Number(p.extra_charge).toLocaleString()} MMK)</option>
+            ))}
           </select>
         </div>
 
