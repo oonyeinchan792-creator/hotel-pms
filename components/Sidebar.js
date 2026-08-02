@@ -10,6 +10,8 @@ const navItems = [
   { name: 'Billing', href: '/billing', icon: '💳' },
   { name: 'Reports', href: '/reports', icon: '📋' },
   { name: 'Housekeeping', href: '/housekeeping', icon: '🧹' },
+  { name: 'Rate Management', href: '/rates', icon: '💲' },
+  { name: 'Night Audit', href: '/nightaudit', icon: '🌙' },
 ]
 
 export default function Sidebar() {
