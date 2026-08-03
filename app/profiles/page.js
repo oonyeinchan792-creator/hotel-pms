@@ -15,6 +15,98 @@ const TYPE_LABELS = {
   group: 'Group',
 };
 
+const styles = {
+  page: { padding: '30px' },
+  headerRow: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: '20px',
+  },
+  title: { fontSize: '26px', fontWeight: 'bold', color: '#0f2540', margin: 0 },
+  newBtn: {
+    background: '#0f2540',
+    color: 'white',
+    padding: '10px 18px',
+    borderRadius: '6px',
+    textDecoration: 'none',
+    fontSize: '14px',
+    fontWeight: 'bold',
+  },
+  filterCard: {
+    background: 'white',
+    border: '1px solid #e2e8f0',
+    borderRadius: '8px',
+    padding: '16px',
+    display: 'flex',
+    gap: '10px',
+    flexWrap: 'wrap',
+    marginBottom: '20px',
+  },
+  input: {
+    flex: 1,
+    minWidth: '240px',
+    padding: '10px 12px',
+    border: '1px solid #e2e8f0',
+    borderRadius: '6px',
+    fontSize: '14px',
+  },
+  select: {
+    padding: '10px 12px',
+    border: '1px solid #e2e8f0',
+    borderRadius: '6px',
+    fontSize: '14px',
+  },
+  searchBtn: {
+    background: '#334155',
+    color: 'white',
+    border: 'none',
+    padding: '10px 20px',
+    borderRadius: '6px',
+    fontSize: '14px',
+    cursor: 'pointer',
+  },
+  tableCard: {
+    background: 'white',
+    border: '1px solid #e2e8f0',
+    borderRadius: '8px',
+    overflow: 'hidden',
+  },
+  table: { width: '100%', borderCollapse: 'collapse', fontSize: '14px' },
+  th: {
+    textAlign: 'left',
+    padding: '12px 16px',
+    background: '#f8fafc',
+    color: '#64748b',
+    fontSize: '12px',
+    textTransform: 'uppercase',
+    borderBottom: '1px solid #e2e8f0',
+  },
+  td: {
+    padding: '12px 16px',
+    borderBottom: '1px solid #f1f5f9',
+    color: '#0f2540',
+  },
+  emptyRow: {
+    padding: '30px',
+    textAlign: 'center',
+    color: '#94a3b8',
+  },
+  link: { color: '#1d4ed8', textDecoration: 'none', fontWeight: 'bold' },
+  badgeVip: {
+    marginLeft: '8px',
+    fontSize: '11px',
+    background: '#fef3c7',
+    color: '#92400e',
+    padding: '2px 8px',
+    borderRadius: '4px',
+  },
+  statusActive: { color: '#16a34a', fontWeight: 'bold' },
+  statusInactive: { color: '#94a3b8' },
+  statusBlacklisted: { color: '#dc2626', fontWeight: 'bold' },
+  subText: { color: '#64748b', fontSize: '13px' },
+};
+
 export default function ProfilesPage() {
   const [profiles, setProfiles] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -44,31 +136,27 @@ export default function ProfilesPage() {
   }
 
   return (
-    <div className="p-6 max-w-6xl mx-auto">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-semibold">Profiles</h1>
-        <Link
-          href="/profiles/new"
-          className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
-        >
+    <div style={styles.page}>
+      <div style={styles.headerRow}>
+        <h1 style={styles.title}>Profiles</h1>
+        <Link href="/profiles/new" style={styles.newBtn}>
           + New Profile
         </Link>
       </div>
 
-      {/* Filters */}
-      <form onSubmit={handleSearchSubmit} className="flex flex-wrap gap-3 mb-6">
+      <form onSubmit={handleSearchSubmit} style={styles.filterCard}>
         <input
           type="text"
           placeholder="Search by name, email, or phone..."
           value={searchText}
           onChange={(e) => setSearchText(e.target.value)}
-          className="border rounded-md px-3 py-2 flex-1 min-w-[240px]"
+          style={styles.input}
         />
 
         <select
           value={typeFilter}
           onChange={(e) => setTypeFilter(e.target.value)}
-          className="border rounded-md px-3 py-2"
+          style={styles.select}
         >
           {Object.entries(TYPE_LABELS).map(([value, label]) => (
             <option key={value} value={value}>
@@ -77,30 +165,26 @@ export default function ProfilesPage() {
           ))}
         </select>
 
-        <button
-          type="submit"
-          className="bg-gray-800 text-white px-4 py-2 rounded-md hover:bg-gray-900"
-        >
+        <button type="submit" style={styles.searchBtn}>
           Search
         </button>
       </form>
 
-      {/* Results table */}
-      <div className="border rounded-lg overflow-hidden">
-        <table className="w-full text-sm">
-          <thead className="bg-gray-100 text-left">
+      <div style={styles.tableCard}>
+        <table style={styles.table}>
+          <thead>
             <tr>
-              <th className="p-3">Name</th>
-              <th className="p-3">Type</th>
-              <th className="p-3">Contact</th>
-              <th className="p-3">Location</th>
-              <th className="p-3">Status</th>
+              <th style={styles.th}>Name</th>
+              <th style={styles.th}>Type</th>
+              <th style={styles.th}>Contact</th>
+              <th style={styles.th}>Location</th>
+              <th style={styles.th}>Status</th>
             </tr>
           </thead>
           <tbody>
             {loading && (
               <tr>
-                <td colSpan={5} className="p-4 text-center text-gray-500">
+                <td colSpan={5} style={styles.emptyRow}>
                   Loading...
                 </td>
               </tr>
@@ -108,7 +192,7 @@ export default function ProfilesPage() {
 
             {!loading && profiles.length === 0 && (
               <tr>
-                <td colSpan={5} className="p-4 text-center text-gray-500">
+                <td colSpan={5} style={styles.emptyRow}>
                   No profiles found.
                 </td>
               </tr>
@@ -116,37 +200,30 @@ export default function ProfilesPage() {
 
             {!loading &&
               profiles.map((p) => (
-                <tr key={p.id} className="border-t hover:bg-gray-50">
-                  <td className="p-3">
-                    <Link
-                      href={`/profiles/${p.id}`}
-                      className="text-blue-600 hover:underline font-medium"
-                    >
+                <tr key={p.id}>
+                  <td style={styles.td}>
+                    <Link href={`/profiles/${p.id}`} style={styles.link}>
                       {p.full_name}
                     </Link>
                     {p.vip_status && (
-                      <span className="ml-2 text-xs bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded">
-                        {p.vip_status}
-                      </span>
+                      <span style={styles.badgeVip}>{p.vip_status}</span>
                     )}
                   </td>
-                  <td className="p-3 capitalize">
-                    {TYPE_LABELS[p.profile_type]}
-                  </td>
-                  <td className="p-3">
+                  <td style={styles.td}>{TYPE_LABELS[p.profile_type]}</td>
+                  <td style={styles.td}>
                     <div>{p.email || '-'}</div>
-                    <div className="text-gray-500">{p.phone || '-'}</div>
+                    <div style={styles.subText}>{p.phone || '-'}</div>
                   </td>
-                  <td className="p-3">
+                  <td style={styles.td}>
                     {[p.city, p.country].filter(Boolean).join(', ') || '-'}
                   </td>
-                  <td className="p-3">
+                  <td style={styles.td}>
                     {p.is_blacklisted ? (
-                      <span className="text-red-600 font-medium">Blacklisted</span>
+                      <span style={styles.statusBlacklisted}>Blacklisted</span>
                     ) : p.is_active ? (
-                      <span className="text-green-600">Active</span>
+                      <span style={styles.statusActive}>Active</span>
                     ) : (
-                      <span className="text-gray-400">Inactive</span>
+                      <span style={styles.statusInactive}>Inactive</span>
                     )}
                   </td>
                 </tr>
