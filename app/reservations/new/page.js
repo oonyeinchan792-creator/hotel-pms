@@ -9,6 +9,7 @@ function NewReservationForm() {
   const [roomTypes, setRoomTypes] = useState([])
   const [companies, setCompanies] = useState([])
   const [packages, setPackages] = useState([])
+  const [ratePlans, setRatePlans] = useState([])
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
@@ -25,6 +26,9 @@ function NewReservationForm() {
     source: 'walk-in',
     company_id: '',
     package_id: '',
+    rate_plan_id: searchParams.get('rate_plan_id') || '',
+    deposit_amount: '',
+    deposit_paid: false,
   })
 
   useEffect(() => {
@@ -37,12 +41,30 @@ function NewReservationForm() {
 
       const { data: packageData } = await supabase.from('packages').select('*').eq('is_active', true).order('name')
       setPackages(packageData || [])
+
+      const { data: rateData } = await supabase.from('rate_plans').select('*').eq('is_active', true).order('code')
+      setRatePlans(rateData || [])
     }
     loadTypes()
   }, [])
 
   function updateField(field, value) {
     setForm((prev) => ({ ...prev, [field]: value }))
+  }
+
+  // rate plans that apply to the currently selected room type
+  const availableRatePlans = form.room_type_id
+    ? ratePlans.filter((p) => p.room_type_id === form.room_type_id)
+    : ratePlans
+
+  const selectedRatePlan = ratePlans.find((p) => p.id === form.rate_plan_id)
+  const selectedRoomType = roomTypes.find((t) => t.id === form.room_type_id)
+  const nightlyRate = selectedRatePlan ? Number(selectedRatePlan.rate) : (selectedRoomType ? Number(selectedRoomType.base_rate) : 0)
+
+  function nights() {
+    if (!form.check_in_date || !form.check_out_date) return 0
+    const diff = (new Date(form.check_out_date) - new Date(form.check_in_date)) / (1000 * 60 * 60 * 24)
+    return diff > 0 ? diff : 0
   }
 
   async function handleSubmit(e) {
@@ -89,6 +111,10 @@ function NewReservationForm() {
       source: form.source,
       company_id: form.company_id || null,
       package_id: form.package_id || null,
+      rate_plan_id: form.rate_plan_id || null,
+      agreed_rate: nightlyRate || null,
+      deposit_amount: form.deposit_amount ? Number(form.deposit_amount) : 0,
+      deposit_paid: form.deposit_paid,
       status: 'reserved',
     })
 
@@ -144,7 +170,7 @@ function NewReservationForm() {
 
         <div style={fieldWrap}>
           <label style={labelStyle}>Room Type *</label>
-          <select style={inputStyle} value={form.room_type_id} onChange={(e) => updateField('room_type_id', e.target.value)}>
+          <select style={inputStyle} value={form.room_type_id} onChange={(e) => { updateField('room_type_id', e.target.value); updateField('rate_plan_id', '') }}>
             <option value="">Select room type</option>
             {roomTypes.map((t) => (
               <option key={t.id} value={t.id}>
@@ -213,6 +239,56 @@ function NewReservationForm() {
               <option key={p.id} value={p.id}>{p.name} (+{Number(p.extra_charge).toLocaleString()} MMK)</option>
             ))}
           </select>
+        </div>
+
+        <h3>Rate & Deposit</h3>
+
+        <div style={fieldWrap}>
+          <label style={labelStyle}>Rate Code</label>
+          <select style={inputStyle} value={form.rate_plan_id} onChange={(e) => updateField('rate_plan_id', e.target.value)}>
+            <option value="">Use room type's standard rate</option>
+            {availableRatePlans.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.code} — {p.name} ({Number(p.rate).toLocaleString()} MMK/night)
+              </option>
+            ))}
+          </select>
+          {form.room_type_id && availableRatePlans.length === 0 && (
+            <p style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>
+              No rate codes set up for this room type yet — standard rate will be used.
+            </p>
+          )}
+        </div>
+
+        {nights() > 0 && nightlyRate > 0 && (
+          <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '6px', padding: '12px 16px', marginBottom: '16px', fontSize: '14px' }}>
+            <strong>{nightlyRate.toLocaleString()} MMK</strong> / night × {nights()} night(s) = {' '}
+            <strong>{(nightlyRate * nights()).toLocaleString()} MMK</strong> total (before package/tax)
+          </div>
+        )}
+
+        <div style={{ display: 'flex', gap: '16px' }}>
+          <div style={{ ...fieldWrap, flex: 1 }}>
+            <label style={labelStyle}>Deposit Amount (MMK)</label>
+            <input
+              style={inputStyle}
+              type="number"
+              min="0"
+              placeholder="0"
+              value={form.deposit_amount}
+              onChange={(e) => updateField('deposit_amount', e.target.value)}
+            />
+          </div>
+          <div style={{ ...fieldWrap, flex: 1, display: 'flex', alignItems: 'flex-end', paddingBottom: '10px' }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px' }}>
+              <input
+                type="checkbox"
+                checked={form.deposit_paid}
+                onChange={(e) => updateField('deposit_paid', e.target.checked)}
+              />
+              Deposit already collected
+            </label>
+          </div>
         </div>
 
         {error && <p style={{ color: '#dc2626' }}>{error}</p>}
