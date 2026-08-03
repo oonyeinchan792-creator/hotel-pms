@@ -84,6 +84,19 @@ export default function ReservationsPage() {
             📅 Check Availability
           </a>
           <a
+            href="/reservations/rate-query"
+            style={{
+              background: '#0369a1',
+              color: 'white',
+              padding: '12px 20px',
+              borderRadius: '8px',
+              textDecoration: 'none',
+              fontWeight: 'bold',
+            }}
+          >
+            💲 Rate Query
+          </a>
+          <a
             href="/reservations/new"
             style={{
               background: '#16a34a',
