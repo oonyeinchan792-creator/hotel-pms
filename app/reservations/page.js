@@ -97,6 +97,19 @@ export default function ReservationsPage() {
             💲 Rate Query
           </a>
           <a
+            href="/reservations/search"
+            style={{
+              background: '#334155',
+              color: 'white',
+              padding: '12px 20px',
+              borderRadius: '8px',
+              textDecoration: 'none',
+              fontWeight: 'bold',
+            }}
+          >
+            🔍 Search / History
+          </a>
+          <a
             href="/reservations/new"
             style={{
               background: '#16a34a',
