@@ -136,7 +136,11 @@ export default function ReservationsPage() {
               const style = statusStyle[r.status] || statusStyle.reserved
               return (
                 <tr key={r.id} style={{ borderTop: '1px solid #e5e7eb' }}>
-                  <td style={{ padding: '12px', fontFamily: 'monospace' }}>{r.confirmation_number}</td>
+                  <td style={{ padding: '12px', fontFamily: 'monospace' }}>
+                    <a href={`/reservations/${r.id}`} style={{ color: '#2563eb', fontWeight: 'bold', textDecoration: 'none' }}>
+                      {r.confirmation_number}
+                    </a>
+                  </td>
                   <td style={{ padding: '12px' }}>{guests[r.guest_id] || 'Unknown'}</td>
                   <td style={{ padding: '12px' }}>{roomTypes[r.room_type_id] || ''}</td>
                   <td style={{ padding: '12px', fontWeight: 'bold' }}>{r.rooms?.room_number || '—'}</td>
