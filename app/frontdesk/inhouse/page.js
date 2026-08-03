@@ -11,6 +11,8 @@ export default function InHousePage() {
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [issuingCard, setIssuingCard] = useState(null)
+  const [checkingOut, setCheckingOut] = useState(null)
+  const [message, setMessage] = useState('')
 
   async function loadAll() {
     setLoading(true)
@@ -56,6 +58,49 @@ export default function InHousePage() {
     loadAll()
   }
 
+  // Express Check-Out: only allowed when the folio balance is 0 (nothing owed).
+  // Skips the billing screen entirely and checks the guest straight out.
+  async function expressCheckOut(reservationId, roomId) {
+    setMessage('')
+    setCheckingOut(reservationId)
+
+    const { data: folio } = await supabase
+      .from('folios')
+      .select('id')
+      .eq('reservation_id', reservationId)
+      .maybeSingle()
+
+    let balance = 0
+    if (folio) {
+      const { data: txns } = await supabase
+        .from('folio_transactions')
+        .select('amount, transaction_type')
+        .eq('folio_id', folio.id)
+      txns?.forEach((t) => {
+        balance += t.transaction_type === 'payment' ? -Number(t.amount) : Number(t.amount)
+      })
+    }
+
+    if (balance > 0) {
+      setMessage(`Cannot express check-out — outstanding balance of ${balance.toLocaleString()} MMK. Please settle the folio first.`)
+      setCheckingOut(null)
+      return
+    }
+
+    await supabase
+      .from('reservations')
+      .update({ status: 'checked_out', actual_check_out: new Date().toISOString() })
+      .eq('id', reservationId)
+
+    if (roomId) {
+      await supabase.from('rooms').update({ status: 'vacant_dirty' }).eq('id', roomId)
+    }
+
+    setMessage('Guest checked out successfully (Express Check-Out).')
+    setCheckingOut(null)
+    loadAll()
+  }
+
   useEffect(() => {
     loadAll()
   }, [])
@@ -83,6 +128,12 @@ export default function InHousePage() {
         onChange={(e) => setSearch(e.target.value)}
         style={{ ...inputStyle, marginBottom: '20px' }}
       />
+
+      {message && (
+        <p style={{ background: '#fef3c7', padding: '10px 14px', borderRadius: '6px', color: '#92400e', maxWidth: '600px' }}>
+          {message}
+        </p>
+      )}
 
       {loading && <p>Loading...</p>}
       {!loading && filtered.length === 0 && <p style={{ color: '#6b7280' }}>No matching in-house guests.</p>}
@@ -129,14 +180,22 @@ export default function InHousePage() {
                     {r.check_out_date} {isDepartureToday && '(Today)'}
                   </td>
                   <td style={{ padding: '12px' }}>{nightsLeft}</td>
-                  <td style={{ padding: '12px' }}>
+                  <td style={{ padding: '12px', whiteSpace: 'nowrap' }}>
                     <button
                       onClick={() => issueKeyCard(r.id, r.room_id)}
                       disabled={issuingCard === r.id}
                       title={keyCardCounts[r.id] ? `${keyCardCounts[r.id]} card(s) issued so far` : 'No cards issued yet'}
-                      style={{ background: '#eab308', color: '#78350f', border: 'none', padding: '5px 10px', borderRadius: '5px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer', marginRight: '10px' }}
+                      style={{ background: '#eab308', color: '#78350f', border: 'none', padding: '5px 10px', borderRadius: '5px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer', marginRight: '8px' }}
                     >
                       🔑 {keyCardCounts[r.id] || 0}
+                    </button>
+                    <button
+                      onClick={() => expressCheckOut(r.id, r.room_id)}
+                      disabled={checkingOut === r.id}
+                      title="Checks out immediately if the folio balance is zero"
+                      style={{ background: '#16a34a', color: 'white', border: 'none', padding: '5px 10px', borderRadius: '5px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer', marginRight: '8px' }}
+                    >
+                      {checkingOut === r.id ? '...' : '⚡ Express Out'}
                     </button>
                     <a href={`/frontdesk/regcard/${r.id}`} style={{ color: '#7c3aed', fontSize: '12px', fontWeight: 'bold', marginRight: '10px' }}>Reg Card &rarr;</a>
                     <a href="/billing" style={{ color: '#2563eb', fontSize: '12px', fontWeight: 'bold' }}>Folio &rarr;</a>
