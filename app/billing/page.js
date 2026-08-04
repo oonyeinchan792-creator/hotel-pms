@@ -64,6 +64,9 @@ export default function BillingPage() {
           <a href="/currency" style={{ background: '#b45309', color: 'white', padding: '10px 18px', borderRadius: '6px', textDecoration: 'none', fontSize: '13px', fontWeight: 'bold' }}>
             💱 Currency Exchange
           </a>
+          <a href="/billing/shift" style={{ background: '#4338ca', color: 'white', padding: '10px 18px', borderRadius: '6px', textDecoration: 'none', fontSize: '13px', fontWeight: 'bold' }}>
+            🧾 Cash Shift
+          </a>
         </div>
       </div>
 
