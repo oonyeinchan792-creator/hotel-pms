@@ -294,7 +294,7 @@ export default function HousekeepingPage() {
           <h1 style={{ color: '#0f2540', fontSize: '22px', marginBottom: '4px' }}>Housekeeping — Task Assignment</h1>
           <p style={{ color: '#64748b', marginTop: 0, fontSize: '14px' }}>Filter rooms and assign cleaning tasks in bulk</p>
         </div>
-        <div style={{ display: 'flex', gap: '10px' }}>
+        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
           <a
             href="/housekeeping/task-sheet"
             style={{ background: '#0d9488', color: 'white', padding: '10px 18px', borderRadius: '6px', textDecoration: 'none', fontSize: '13px', fontWeight: 'bold' }}
@@ -306,6 +306,24 @@ export default function HousekeepingPage() {
             style={{ background: '#0f2540', color: 'white', padding: '10px 18px', borderRadius: '6px', textDecoration: 'none', fontSize: '13px', fontWeight: 'bold' }}
           >
             🖨️ Print Assignment Sheet
+          </a>
+          <a
+            href="/housekeeping/lostfound"
+            style={{ background: '#be185d', color: 'white', padding: '10px 18px', borderRadius: '6px', textDecoration: 'none', fontSize: '13px', fontWeight: 'bold' }}
+          >
+            🧳 Lost & Found
+          </a>
+          <a
+            href="/housekeeping/laundry"
+            style={{ background: '#0891b2', color: 'white', padding: '10px 18px', borderRadius: '6px', textDecoration: 'none', fontSize: '13px', fontWeight: 'bold' }}
+          >
+            👕 Laundry Status
+          </a>
+          <a
+            href="/housekeeping/maintenance"
+            style={{ background: '#dc2626', color: 'white', padding: '10px 18px', borderRadius: '6px', textDecoration: 'none', fontSize: '13px', fontWeight: 'bold' }}
+          >
+            🔧 Maintenance
           </a>
         </div>
       </div>
