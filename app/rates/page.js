@@ -116,6 +116,10 @@ export default function RateManagementPage() {
         <a href="/rates/room-types" style={{ color: '#2563eb', fontSize: '13px', fontWeight: 'bold' }}>
           🏷️ Manage Room Types & Classes &rarr;
         </a>
+        {' · '}
+        <a href="/rates/dynamic-pricing" style={{ color: '#2563eb', fontSize: '13px', fontWeight: 'bold' }}>
+          📈 Dynamic Pricing &rarr;
+        </a>
       </p>
 
       {/* Form */}
