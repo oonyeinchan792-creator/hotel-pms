@@ -4,9 +4,11 @@ import { supabase } from '../../lib/supabase'
 
 export default function NightAuditPage() {
   const [businessDate, setBusinessDate] = useState('')
+  const [taxRate, setTaxRate] = useState(0)
   const [inHouse, setInHouse] = useState([])
   const [totalRooms, setTotalRooms] = useState(0)
   const [postedToday, setPostedToday] = useState(false)
+  const [taxPostedToday, setTaxPostedToday] = useState(false)
   const [trialBalance, setTrialBalance] = useState(null)
   const [stats, setStats] = useState(null)
   const [auditHistory, setAuditHistory] = useState([])
@@ -20,6 +22,7 @@ export default function NightAuditPage() {
 
     const { data: settings } = await supabase.from('hotel_settings').select('*').eq('id', 1).single()
     setBusinessDate(settings?.business_date || '')
+    setTaxRate(Number(settings?.tax_rate_percent) || 0)
 
     const { data: roomsData } = await supabase.from('rooms').select('id, status')
     setTotalRooms(roomsData?.length || 0)
@@ -36,6 +39,13 @@ export default function NightAuditPage() {
       .eq('description', `Room Charge — ${settings?.business_date}`)
       .limit(1)
     setPostedToday((postedCheck || []).length > 0)
+
+    const { data: taxCheck } = await supabase
+      .from('folio_transactions')
+      .select('id')
+      .eq('description', `Tax — ${settings?.business_date}`)
+      .limit(1)
+    setTaxPostedToday((taxCheck || []).length > 0)
 
     const { data: allTxns } = await supabase.from('folio_transactions').select('transaction_type, amount')
     const tb = { charge: 0, tax: 0, discount: 0, payment: 0, deposit: 0, refund: 0 }
@@ -87,6 +97,37 @@ export default function NightAuditPage() {
     loadAll()
   }
 
+  async function postTaxCharges() {
+    setRunning(true)
+    setMessage('')
+
+    let count = 0
+    let totalTax = 0
+
+    for (const r of inHouse) {
+      let { data: folio } = await supabase.from('folios').select('id').eq('reservation_id', r.id).maybeSingle()
+      if (!folio) continue
+
+      const rate = Number(r.room_types?.base_rate || 0)
+      const taxAmount = Math.round(rate * (taxRate / 100))
+      if (taxAmount <= 0) continue
+
+      await supabase.from('folio_transactions').insert({
+        folio_id: folio.id,
+        transaction_type: 'tax',
+        description: `Tax — ${businessDate}`,
+        amount: taxAmount,
+      })
+      count++
+      totalTax += taxAmount
+    }
+
+    setMessage(`Posted tax (${taxRate}%) for ${count} room(s), total ${totalTax.toLocaleString()} MMK.`)
+    setTaxPostedToday(true)
+    setRunning(false)
+    loadAll()
+  }
+
   function calculateStats() {
     const occupied = inHouse.length
     const occupancyPct = totalRooms > 0 ? (occupied / totalRooms) * 100 : 0
@@ -99,6 +140,10 @@ export default function NightAuditPage() {
   async function runEndOfDay() {
     if (!postedToday) {
       setMessage('Please post room charges before running end of day.')
+      return
+    }
+    if (!taxPostedToday) {
+      setMessage('Please post tax before running end of day.')
       return
     }
 
@@ -152,7 +197,7 @@ export default function NightAuditPage() {
       <a href="/" style={{ color: '#2563eb' }}>&larr; Back to Dashboard</a>
       <h1 style={{ color: '#0f2540' }}>Night Audit</h1>
       <p style={{ color: '#64748b', marginTop: 0, fontSize: '14px' }}>
-        Current Business Date: <strong>{businessDate}</strong>
+        Current Business Date: <strong>{businessDate}</strong> · Tax Rate: <strong>{taxRate}%</strong>
       </p>
 
       {message && (
@@ -178,7 +223,26 @@ export default function NightAuditPage() {
           </div>
 
           <div style={{ background: 'white', borderRadius: '8px', padding: '20px', marginBottom: '20px' }}>
-            <h3 style={{ marginTop: 0 }}>Step 2 — Trial Balance</h3>
+            <h3 style={{ marginTop: 0 }}>Step 2 — Tax Calculation</h3>
+            <p style={{ fontSize: '13px', color: '#64748b' }}>
+              Calculate and post {taxRate}% tax on today's room charges for all in-house guest(s).
+            </p>
+            <button
+              onClick={postTaxCharges}
+              disabled={running || !postedToday || taxPostedToday}
+              style={{
+                background: taxPostedToday ? '#9ca3af' : (!postedToday ? '#d1d5db' : '#7c3aed'),
+                color: 'white', border: 'none', padding: '10px 20px', borderRadius: '6px', fontWeight: 'bold',
+                cursor: (running || !postedToday || taxPostedToday) ? 'default' : 'pointer',
+              }}
+            >
+              {taxPostedToday ? '✓ Tax Posted' : 'Post Tax'}
+            </button>
+            {!postedToday && <p style={{ fontSize: '12px', color: '#94a3b8', marginTop: '6px' }}>Post room charges first.</p>}
+          </div>
+
+          <div style={{ background: 'white', borderRadius: '8px', padding: '20px', marginBottom: '20px' }}>
+            <h3 style={{ marginTop: 0 }}>Step 3 — Trial Balance (Balance Verification)</h3>
             {trialBalance && (
               <table style={{ width: '100%', fontSize: '13px', borderCollapse: 'collapse' }}>
                 <tbody>
@@ -202,7 +266,7 @@ export default function NightAuditPage() {
           </div>
 
           <div style={{ background: 'white', borderRadius: '8px', padding: '20px', marginBottom: '20px' }}>
-            <h3 style={{ marginTop: 0 }}>Step 3 — Statistics</h3>
+            <h3 style={{ marginTop: 0 }}>Step 4 — Statistics</h3>
             <button onClick={calculateStats} style={{ background: '#0d9488', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer', marginBottom: '14px' }}>
               Calculate Today's Statistics
             </button>
@@ -233,9 +297,9 @@ export default function NightAuditPage() {
           </div>
 
           <div style={{ background: 'white', borderRadius: '8px', padding: '20px', marginBottom: '20px' }}>
-            <h3 style={{ marginTop: 0 }}>Step 4 — End of Day / Business Date Change</h3>
+            <h3 style={{ marginTop: 0 }}>Step 5 — End of Day / Close & Roll Business Date</h3>
             <p style={{ fontSize: '13px', color: '#64748b' }}>
-              This will mark unarrived reservations as no-show and advance the business date to the next day.
+              This will mark unarrived reservations as no-show, close the current business date, and roll it forward to the next day.
             </p>
             <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
               <input
@@ -246,7 +310,7 @@ export default function NightAuditPage() {
               />
               <button
                 onClick={runEndOfDay}
-                disabled={running || !postedToday}
+                disabled={running || !postedToday || !taxPostedToday}
                 style={{ background: '#dc2626', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer' }}
               >
                 {running ? 'Running...' : 'Run End of Day'}
@@ -255,7 +319,7 @@ export default function NightAuditPage() {
           </div>
 
           <div style={{ background: 'white', borderRadius: '8px', padding: '20px' }}>
-            <h3 style={{ marginTop: 0 }}>Recent Audit History</h3>
+            <h3 style={{ marginTop: 0 }}>Audit Reports — Recent History</h3>
             {auditHistory.length === 0 && <p style={{ color: '#6b7280', fontSize: '13px' }}>No audits run yet.</p>}
             {auditHistory.map((a) => (
               <div key={a.id} style={{ borderTop: '1px solid #e5e7eb', padding: '8px 0', fontSize: '13px', display: 'flex', justifyContent: 'space-between' }}>
