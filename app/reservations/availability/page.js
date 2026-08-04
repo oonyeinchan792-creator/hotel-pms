@@ -46,22 +46,25 @@ export default function AvailabilityPage() {
 
   const dateColumns = Array.from({ length: DAYS_TO_SHOW }, (_, i) => todayStr(startOffset + i))
 
-  function availableForTypeOnDate(typeId, dateStr) {
-    const totalOfType = allRooms.filter((r) => r.room_type_id === typeId).length
-    // A reservation occupies this date if check_in_date <= date < check_out_date
+  function availableForTypeOnDate(type, dateStr) {
+    const physicalRooms = allRooms.filter((r) => r.room_type_id === type.id).length
+    const overbookingLimit = Number(type.overbooking_limit) || 0
+    const totalCapacity = physicalRooms + overbookingLimit
+
     const bookedOfType = reservations.filter(
-      (r) => r.room_type_id === typeId && r.check_in_date <= dateStr && r.check_out_date > dateStr
+      (r) => r.room_type_id === type.id && r.check_in_date <= dateStr && r.check_out_date > dateStr
     ).length
-    return Math.max(totalOfType - bookedOfType, 0)
+
+    return Math.max(totalCapacity - bookedOfType, 0)
   }
 
-  const cellStyle = (available) => ({
+  const cellStyle = (available, isOverbookRange) => ({
     padding: '10px 6px',
     textAlign: 'center',
     fontWeight: 'bold',
     fontSize: '13px',
-    background: available > 0 ? '#dcfce7' : '#fee2e2',
-    color: available > 0 ? '#166534' : '#991b1b',
+    background: available > 0 ? (isOverbookRange ? '#fef3c7' : '#dcfce7') : '#fee2e2',
+    color: available > 0 ? (isOverbookRange ? '#92400e' : '#166534') : '#991b1b',
     borderLeft: '1px solid #e5e7eb',
     cursor: available > 0 ? 'pointer' : 'default',
   })
@@ -111,41 +114,49 @@ export default function AvailabilityPage() {
               </tr>
             </thead>
             <tbody>
-              {roomTypes.map((type) => (
-                <tr key={type.id} style={{ borderTop: '1px solid #e5e7eb' }}>
-                  <td style={{ position: 'sticky', left: 0, background: 'white', padding: '10px', fontWeight: 'bold', color: '#0f2540', borderRight: '1px solid #e5e7eb' }}>
-                    {type.name}
-                    <div style={{ fontSize: '11px', color: '#94a3b8', fontWeight: 'normal' }}>{Number(type.base_rate).toLocaleString()} MMK</div>
-                  </td>
-                  {dateColumns.map((d) => {
-                    const avail = availableForTypeOnDate(type.id, d)
-                    const nextDay = todayStr(dateColumns.indexOf(d) + startOffset + 1)
-                    return (
-                      <td key={d} style={cellStyle(avail)}>
-                        {avail > 0 ? (
-                          <a
-                            href={`/reservations/new?room_type_id=${type.id}&check_in=${d}&check_out=${nextDay}`}
-                            style={{ color: 'inherit', textDecoration: 'none', display: 'block' }}
-                            title={`Book ${type.name} for ${d}`}
-                          >
-                            {avail}
-                          </a>
-                        ) : (
-                          avail
-                        )}
-                      </td>
-                    )
-                  })}
-                </tr>
-              ))}
+              {roomTypes.map((type) => {
+                const physicalRooms = allRooms.filter((r) => r.room_type_id === type.id).length
+                return (
+                  <tr key={type.id} style={{ borderTop: '1px solid #e5e7eb' }}>
+                    <td style={{ position: 'sticky', left: 0, background: 'white', padding: '10px', fontWeight: 'bold', color: '#0f2540', borderRight: '1px solid #e5e7eb' }}>
+                      {type.name}
+                      <div style={{ fontSize: '11px', color: '#94a3b8', fontWeight: 'normal' }}>{Number(type.base_rate).toLocaleString()} MMK</div>
+                      {type.overbooking_limit > 0 && (
+                        <div style={{ fontSize: '10px', color: '#d97706', fontWeight: 'bold' }}>+{type.overbooking_limit} overbook allowed</div>
+                      )}
+                    </td>
+                    {dateColumns.map((d) => {
+                      const avail = availableForTypeOnDate(type, d)
+                      const isOverbookRange = avail > 0 && (physicalRooms - (reservations.filter(r => r.room_type_id === type.id && r.check_in_date <= d && r.check_out_date > d).length)) <= 0
+                      const nextDay = todayStr(dateColumns.indexOf(d) + startOffset + 1)
+                      return (
+                        <td key={d} style={cellStyle(avail, isOverbookRange)}>
+                          {avail > 0 ? (
+                            <a
+                              href={`/reservations/new?room_type_id=${type.id}&check_in=${d}&check_out=${nextDay}`}
+                              style={{ color: 'inherit', textDecoration: 'none', display: 'block' }}
+                              title={isOverbookRange ? `Overbooking — ${type.name} for ${d}` : `Book ${type.name} for ${d}`}
+                            >
+                              {avail}
+                            </a>
+                          ) : (
+                            avail
+                          )}
+                        </td>
+                      )
+                    })}
+                  </tr>
+                )
+              })}
             </tbody>
           </table>
         </div>
       )}
 
-      <div style={{ marginTop: '14px', display: 'flex', gap: '16px', fontSize: '12px', color: '#64748b' }}>
+      <div style={{ marginTop: '14px', display: 'flex', gap: '16px', fontSize: '12px', color: '#64748b', flexWrap: 'wrap' }}>
         <span><span style={{ background: '#dcfce7', padding: '2px 8px', borderRadius: '4px', color: '#166534', fontWeight: 'bold' }}>N</span> = Rooms available (click to book)</span>
-        <span><span style={{ background: '#fee2e2', padding: '2px 8px', borderRadius: '4px', color: '#991b1b', fontWeight: 'bold' }}>0</span> = Sold out</span>
+        <span><span style={{ background: '#fef3c7', padding: '2px 8px', borderRadius: '4px', color: '#92400e', fontWeight: 'bold' }}>N</span> = Overbooking range (physical rooms sold out, using overbooking allowance)</span>
+        <span><span style={{ background: '#fee2e2', padding: '2px 8px', borderRadius: '4px', color: '#991b1b', fontWeight: 'bold' }}>0</span> = Sold out (including overbooking)</span>
       </div>
     </main>
   )
