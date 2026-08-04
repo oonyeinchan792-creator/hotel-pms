@@ -16,6 +16,10 @@ export default function RateManagementPage() {
     rate: '',
     valid_from: '',
     valid_to: '',
+    min_stay: '',
+    max_stay: '',
+    closed_to_arrival: false,
+    closed_to_departure: false,
   })
 
   async function loadAll() {
@@ -38,7 +42,10 @@ export default function RateManagementPage() {
   }, [])
 
   function resetForm() {
-    setForm({ code: '', name: '', room_type_id: '', rate: '', valid_from: '', valid_to: '' })
+    setForm({
+      code: '', name: '', room_type_id: '', rate: '', valid_from: '', valid_to: '',
+      min_stay: '', max_stay: '', closed_to_arrival: false, closed_to_departure: false,
+    })
     setEditingId(null)
   }
 
@@ -50,6 +57,10 @@ export default function RateManagementPage() {
       rate: plan.rate,
       valid_from: plan.valid_from || '',
       valid_to: plan.valid_to || '',
+      min_stay: plan.min_stay || '',
+      max_stay: plan.max_stay || '',
+      closed_to_arrival: plan.closed_to_arrival || false,
+      closed_to_departure: plan.closed_to_departure || false,
     })
     setEditingId(plan.id)
   }
@@ -70,6 +81,10 @@ export default function RateManagementPage() {
       rate: Number(form.rate),
       valid_from: form.valid_from || null,
       valid_to: form.valid_to || null,
+      min_stay: form.min_stay ? Number(form.min_stay) : null,
+      max_stay: form.max_stay ? Number(form.max_stay) : null,
+      closed_to_arrival: form.closed_to_arrival,
+      closed_to_departure: form.closed_to_departure,
     }
 
     if (editingId) {
@@ -97,6 +112,11 @@ export default function RateManagementPage() {
       <a href="/reservations" style={{ color: '#2563eb' }}>&larr; Back to Reservations</a>
       <h1 style={{ color: '#0f2540' }}>Rate Management</h1>
       <p style={{ color: '#64748b', marginTop: 0, fontSize: '14px' }}>Create and manage rate codes for each room type</p>
+      <p>
+        <a href="/rates/room-types" style={{ color: '#2563eb', fontSize: '13px', fontWeight: 'bold' }}>
+          🏷️ Manage Room Types & Classes &rarr;
+        </a>
+      </p>
 
       {/* Form */}
       <div style={{ background: 'white', borderRadius: '8px', padding: '20px', marginBottom: '24px' }}>
@@ -137,6 +157,30 @@ export default function RateManagementPage() {
             </div>
           </div>
 
+          <div style={{ background: '#fff7ed', border: '1px solid #fdba74', borderRadius: '6px', padding: '14px', marginBottom: '14px' }}>
+            <div style={{ fontSize: '12px', fontWeight: 'bold', color: '#92400e', marginBottom: '10px' }}>Restrictions</div>
+            <div style={{ display: 'flex', gap: '14px', flexWrap: 'wrap', marginBottom: '10px' }}>
+              <div style={{ flex: '0 1 140px' }}>
+                <label style={labelStyle}>Min Stay (nights)</label>
+                <input style={inputStyle} type="number" min="0" value={form.min_stay} onChange={(e) => setForm({ ...form, min_stay: e.target.value })} />
+              </div>
+              <div style={{ flex: '0 1 140px' }}>
+                <label style={labelStyle}>Max Stay (nights)</label>
+                <input style={inputStyle} type="number" min="0" value={form.max_stay} onChange={(e) => setForm({ ...form, max_stay: e.target.value })} />
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: '20px' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px' }}>
+                <input type="checkbox" checked={form.closed_to_arrival} onChange={(e) => setForm({ ...form, closed_to_arrival: e.target.checked })} />
+                Closed to Arrival
+              </label>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px' }}>
+                <input type="checkbox" checked={form.closed_to_departure} onChange={(e) => setForm({ ...form, closed_to_departure: e.target.checked })} />
+                Closed to Departure
+              </label>
+            </div>
+          </div>
+
           {error && <p style={{ color: '#dc2626', fontSize: '13px' }}>{error}</p>}
 
           <div style={{ display: 'flex', gap: '10px' }}>
@@ -163,6 +207,7 @@ export default function RateManagementPage() {
               <th style={{ padding: '12px' }}>Room Type</th>
               <th style={{ padding: '12px' }}>Rate</th>
               <th style={{ padding: '12px' }}>Valid Period</th>
+              <th style={{ padding: '12px' }}>Restrictions</th>
               <th style={{ padding: '12px' }}>Status</th>
               <th style={{ padding: '12px' }}></th>
             </tr>
@@ -176,6 +221,13 @@ export default function RateManagementPage() {
                 <td style={{ padding: '12px', fontWeight: 'bold' }}>{Number(p.rate).toLocaleString()} MMK</td>
                 <td style={{ padding: '12px', fontSize: '12px' }}>
                   {p.valid_from || '—'} &rarr; {p.valid_to || '—'}
+                </td>
+                <td style={{ padding: '12px', fontSize: '11px', color: '#92400e' }}>
+                  {p.min_stay ? `Min ${p.min_stay}n ` : ''}
+                  {p.max_stay ? `Max ${p.max_stay}n ` : ''}
+                  {p.closed_to_arrival ? 'CTA ' : ''}
+                  {p.closed_to_departure ? 'CTD ' : ''}
+                  {!p.min_stay && !p.max_stay && !p.closed_to_arrival && !p.closed_to_departure && '—'}
                 </td>
                 <td style={{ padding: '12px' }}>
                   <span style={{ background: p.is_active ? '#dcfce7' : '#f3f4f6', color: p.is_active ? '#166534' : '#6b7280', padding: '4px 10px', borderRadius: '12px', fontSize: '12px', fontWeight: 'bold' }}>
