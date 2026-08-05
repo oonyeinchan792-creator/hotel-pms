@@ -62,7 +62,7 @@ export default function ReportsPage() {
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: '#eef1f5' }}>
       <Sidebar />
-      <div style={{ flex: 1, padding: 24 }}>
+      <div style={{ flex: 1, padding: 24, marginLeft: 220 }}>
         <h1 style={{ color: '#0f2540', marginBottom: 16 }}>Reports</h1>
 
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 16 }}>
@@ -271,15 +271,19 @@ function ReportOutput({ type, data }) {
       <div>
         <h3 style={{ color: '#0f2540' }}>Night Audit Report</h3>
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead><tr>{th('Business Date')}{th('Run At')}{th('Revenue Posted')}{th('Tax Posted')}{th('Rooms Processed')}</tr></thead>
+          <thead><tr>{th('Audit Date')}{th('Run At')}{th('Rooms Charged')}{th('Room Revenue')}{th('No-Shows')}{th('Occ %')}{th('ADR')}{th('RevPAR')}{th('Run By')}</tr></thead>
           <tbody>
             {data.map(l => (
               <tr key={l.id}>
-                {td(l.business_date)}
-                {td(l.run_at ? new Date(l.run_at).toLocaleString() : '-')}
-                {td(Number(l.revenue_posted).toFixed(2))}
-                {td(Number(l.tax_posted).toFixed(2))}
-                {td(l.rooms_processed ?? '-')}
+                {td(l.audit_date)}
+                {td(l.created_at ? new Date(l.created_at).toLocaleString() : '-')}
+                {td(l.rooms_charged ?? '-')}
+                {td(Number(l.total_room_revenue || 0).toLocaleString())}
+                {td(l.no_shows_marked ?? '-')}
+                {td(l.occupancy_pct ? `${l.occupancy_pct}%` : '-')}
+                {td(l.adr ? Number(l.adr).toLocaleString() : '-')}
+                {td(l.revpar ? Number(l.revpar).toLocaleString() : '-')}
+                {td(l.run_by || '-')}
               </tr>
             ))}
           </tbody>
