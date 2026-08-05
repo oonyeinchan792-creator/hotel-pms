@@ -163,6 +163,14 @@ export default function NightAuditPage() {
       noShowCount = ids.length
     }
 
+    // Reset all still-occupied rooms to "Occupied Dirty" for the new day —
+    // a room stays dirty every night regardless of yesterday's cleaning,
+    // so HK always knows which occupied rooms need service today.
+    await supabase
+      .from('rooms')
+      .update({ status: 'occupied_dirty' })
+      .in('status', ['occupied_clean', 'occupied_inspected'])
+
     const occupied = inHouse.length
     const occupancyPct = totalRooms > 0 ? (occupied / totalRooms) * 100 : 0
     const roomRevenueToday = inHouse.reduce((sum, r) => sum + Number(r.room_types?.base_rate || 0), 0)
@@ -185,7 +193,7 @@ export default function NightAuditPage() {
     const nextDateStr = nextDate.toISOString().split('T')[0]
     await supabase.from('hotel_settings').update({ business_date: nextDateStr }).eq('id', 1)
 
-    setMessage(`End of Day complete. Business date advanced to ${nextDateStr}. ${noShowCount} no-show(s) marked.`)
+    setMessage(`End of Day complete. Business date advanced to ${nextDateStr}. ${noShowCount} no-show(s) marked. Occupied rooms reset to Dirty for tomorrow's cleaning.`)
     setRunning(false)
     loadAll()
   }
