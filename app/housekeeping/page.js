@@ -55,6 +55,7 @@ export default function HousekeepingPage() {
 
   const [editingRoom, setEditingRoom] = useState(null)
   const [modalStatus, setModalStatus] = useState('')
+  const [bulkMode, setBulkMode] = useState(false)
 
   async function loadAll() {
     setLoading(true)
@@ -109,13 +110,30 @@ export default function HousekeepingPage() {
     loadAll()
   }
 
+  async function updateStatusBulk(roomIds, newStatus) {
+    await supabase.from('rooms').update({ status: newStatus }).in('id', roomIds)
+    setBulkMode(false)
+    setModalStatus('')
+    setSelectedRooms(new Set())
+    loadAll()
+  }
+
   function openStatusModal(room) {
+    setBulkMode(false)
     setEditingRoom(room)
     setModalStatus(room.status)
   }
 
+  function openBulkStatusModal() {
+    if (selectedRooms.size === 0) return
+    setBulkMode(true)
+    setEditingRoom(null)
+    setModalStatus('vacant_dirty')
+  }
+
   function closeStatusModal() {
     setEditingRoom(null)
+    setBulkMode(false)
     setModalStatus('')
   }
 
@@ -508,6 +526,7 @@ export default function HousekeepingPage() {
       {selectedRooms.size > 0 && (
         <div style={{ background: '#fff7ed', border: '1px solid #fdba74', borderRadius: '6px', padding: '12px 16px', marginBottom: '16px', display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
           <strong style={{ fontSize: '13px' }}>{selectedRooms.size} room(s) selected</strong>
+          <button onClick={openBulkStatusModal} style={actionBtn('#7c3aed')}>Change Status for Selected</button>
           <input placeholder="Staff name" value={assignStaff} onChange={(e) => setAssignStaff(e.target.value)} style={{ ...inputStyle, flex: '0 1 200px' }} />
           <button onClick={assignSelected} style={actionBtn('#0f2540')}>Assign Task to Selected</button>
           <button onClick={() => setSelectedRooms(new Set())} style={actionBtn('#6b7280')}>Clear Selection</button>
@@ -596,8 +615,8 @@ export default function HousekeepingPage() {
           </table>
         </div>
       )}
-      {/* Room Status change — popup modal */}
-      {editingRoom && (
+      {/* Room Status change — popup modal (single room or bulk) */}
+      {(editingRoom || bulkMode) && (
         <div
           onClick={closeStatusModal}
           style={{
@@ -609,12 +628,25 @@ export default function HousekeepingPage() {
             onClick={(e) => e.stopPropagation()}
             style={{ background: 'white', borderRadius: '8px', padding: '24px', width: '360px', boxShadow: '0 10px 30px rgba(0,0,0,0.2)' }}
           >
-            <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#0f2540', marginBottom: '4px' }}>
-              Room {editingRoom.room_number}
-            </div>
-            <div style={{ fontSize: '12px', color: '#64748b', marginBottom: '16px' }}>
-              {roomTypes[editingRoom.room_type_id]?.name} · Floor {editingRoom.floor}
-            </div>
+            {bulkMode ? (
+              <>
+                <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#0f2540', marginBottom: '4px' }}>
+                  Change Status — {selectedRooms.size} Room(s)
+                </div>
+                <div style={{ fontSize: '12px', color: '#64748b', marginBottom: '16px' }}>
+                  This will set the same status for all selected rooms.
+                </div>
+              </>
+            ) : (
+              <>
+                <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#0f2540', marginBottom: '4px' }}>
+                  Room {editingRoom.room_number}
+                </div>
+                <div style={{ fontSize: '12px', color: '#64748b', marginBottom: '16px' }}>
+                  {roomTypes[editingRoom.room_type_id]?.name} · Floor {editingRoom.floor}
+                </div>
+              </>
+            )}
 
             <label style={{ fontSize: '12px', fontWeight: 'bold', color: '#374151', display: 'block', marginBottom: '6px' }}>
               Room Status
@@ -639,10 +671,10 @@ export default function HousekeepingPage() {
                 Cancel
               </button>
               <button
-                onClick={() => updateStatus(editingRoom.id, modalStatus)}
+                onClick={() => bulkMode ? updateStatusBulk(Array.from(selectedRooms), modalStatus) : updateStatus(editingRoom.id, modalStatus)}
                 style={{ background: '#0f2540', color: 'white', border: 'none', padding: '9px 18px', borderRadius: '6px', fontSize: '13px', fontWeight: 'bold', cursor: 'pointer' }}
               >
-                Save
+                {bulkMode ? `Save for ${selectedRooms.size} Room(s)` : 'Save'}
               </button>
             </div>
           </div>
