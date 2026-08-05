@@ -12,6 +12,7 @@ const navItems = [
   { name: 'Housekeeping', href: '/housekeeping', icon: '🧹' },
   { name: 'Rate Management', href: '/rates', icon: '💲' },
   { name: 'Night Audit', href: '/nightaudit', icon: '🌙' },
+  { name: 'Configuration', href: '/configuration', icon: '⚙️' },
 ]
 export default function Sidebar() {
   const pathname = usePathname()
