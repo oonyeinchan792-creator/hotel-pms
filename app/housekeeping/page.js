@@ -110,8 +110,25 @@ export default function HousekeepingPage() {
     loadAll()
   }
 
-  async function updateStatusBulk(roomIds, newStatus) {
-    await supabase.from('rooms').update({ status: newStatus }).in('id', roomIds)
+  // Bulk change is occupancy-safe: HK staff can only change the cleanliness
+  // level (Dirty/Clean/Inspected) or take rooms OOO/OOS. Whether a room is
+  // Vacant or Occupied is controlled by Front Desk check-in/check-out only —
+  // this function never flips that prefix, it preserves each room's own.
+  async function updateStatusBulk(roomIds, levelOrSpecial) {
+    const specialStatuses = ['out_of_order', 'out_of_service']
+
+    if (specialStatuses.includes(levelOrSpecial)) {
+      await supabase.from('rooms').update({ status: levelOrSpecial }).in('id', roomIds)
+    } else {
+      // levelOrSpecial is 'dirty' | 'clean' | 'inspected'
+      for (const roomId of roomIds) {
+        const room = rooms.find((r) => r.id === roomId)
+        if (!room) continue
+        const prefix = room.status.startsWith('occupied') ? 'occupied' : 'vacant'
+        await supabase.from('rooms').update({ status: `${prefix}_${levelOrSpecial}` }).eq('id', roomId)
+      }
+    }
+
     setBulkMode(false)
     setModalStatus('')
     setSelectedRooms(new Set())
@@ -128,7 +145,7 @@ export default function HousekeepingPage() {
     if (selectedRooms.size === 0) return
     setBulkMode(true)
     setEditingRoom(null)
-    setModalStatus('vacant_dirty')
+    setModalStatus('dirty')
   }
 
   function closeStatusModal() {
@@ -651,19 +668,44 @@ export default function HousekeepingPage() {
             <label style={{ fontSize: '12px', fontWeight: 'bold', color: '#374151', display: 'block', marginBottom: '6px' }}>
               Room Status
             </label>
+            {!bulkMode && editingRoom && (
+              <div style={{ fontSize: '11px', color: '#94a3b8', marginBottom: '6px' }}>
+                This room is currently <strong>{editingRoom.status.startsWith('occupied') ? 'Occupied' : 'Vacant'}</strong> — HK can only change cleanliness, not occupancy. Occupancy changes only through Front Desk check-in/check-out.
+              </div>
+            )}
+            {bulkMode && (
+              <div style={{ fontSize: '11px', color: '#94a3b8', marginBottom: '6px' }}>
+                Each room keeps its own Occupied/Vacant state — only cleanliness changes for all selected rooms.
+              </div>
+            )}
             <select
               value={modalStatus}
               onChange={(e) => setModalStatus(e.target.value)}
               style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #d1d5db', fontSize: '13px', marginBottom: '20px', boxSizing: 'border-box' }}
             >
-              <option value="vacant_dirty">Vacant Dirty</option>
-              <option value="vacant_clean">Vacant Clean</option>
-              <option value="vacant_inspected">Vacant Inspected</option>
-              <option value="occupied_dirty">Occupied Dirty</option>
-              <option value="occupied_clean">Occupied Clean</option>
-              <option value="occupied_inspected">Occupied Inspected</option>
-              <option value="out_of_order">Out of Order</option>
-              <option value="out_of_service">Out of Service</option>
+              {bulkMode ? (
+                <>
+                  <option value="dirty">Dirty</option>
+                  <option value="clean">Clean</option>
+                  <option value="inspected">Inspected</option>
+                  <option value="out_of_order">Out of Order</option>
+                  <option value="out_of_service">Out of Service</option>
+                </>
+              ) : editingRoom?.status.startsWith('occupied') ? (
+                <>
+                  <option value="occupied_dirty">Occupied Dirty</option>
+                  <option value="occupied_clean">Occupied Clean</option>
+                  <option value="occupied_inspected">Occupied Inspected</option>
+                </>
+              ) : (
+                <>
+                  <option value="vacant_dirty">Vacant Dirty</option>
+                  <option value="vacant_clean">Vacant Clean</option>
+                  <option value="vacant_inspected">Vacant Inspected</option>
+                  <option value="out_of_order">Out of Order</option>
+                  <option value="out_of_service">Out of Service</option>
+                </>
+              )}
             </select>
 
             <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
