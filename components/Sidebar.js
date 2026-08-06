@@ -10,6 +10,7 @@ const navItems = [
   { name: 'Front Desk', href: '/frontdesk', icon: '🛎️' },
   { name: 'Guests', href: '/guests', icon: '👤' },
   { name: 'Profiles', href: '/profiles', icon: '🗂️' },
+  { name: 'CRM / Loyalty', href: '/crm', icon: '🎁' },
   { name: 'Billing', href: '/billing', icon: '💳' },
   { name: 'Reports', href: '/reports', icon: '📋' },
   { name: 'Housekeeping', href: '/housekeeping', icon: '🧹' },
