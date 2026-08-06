@@ -2,12 +2,14 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { supabase } from '../lib/supabase';
+import { getAllowedModules } from '../lib/roles';
 
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
   const [session, setSession] = useState(undefined); // undefined = loading
   const [profile, setProfile] = useState(null);
+  const [allowedModules, setAllowedModules] = useState(null); // null = not loaded yet
   const router = useRouter();
   const pathname = usePathname();
 
@@ -33,9 +35,14 @@ export function AuthProvider({ children }) {
         .select('*')
         .eq('id', session.user.id)
         .single()
-        .then(({ data }) => setProfile(data));
+        .then(async ({ data }) => {
+          setProfile(data);
+          const modules = await getAllowedModules(data);
+          setAllowedModules(modules);
+        });
     } else {
       setProfile(null);
+      setAllowedModules(null);
     }
   }, [session, pathname]);
 
@@ -48,7 +55,7 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ session, profile }}>
+    <AuthContext.Provider value={{ session, profile, allowedModules }}>
       {children}
     </AuthContext.Provider>
   );
