@@ -1,14 +1,21 @@
 'use client'
 import { usePathname } from 'next/navigation'
 import Sidebar from './Sidebar'
+import { useAuth } from '../context/AuthContext'
 
 export default function AppShell({ children }) {
   const pathname = usePathname()
   const isLoginPage = pathname === '/login'
+  const auth = useAuth()
 
   if (isLoginPage) {
     return <>{children}</>
   }
+
+  const allowed = auth?.allowedModules
+  const hasAccess =
+    !allowed ||
+    allowed.some((m) => m === pathname || (m !== '/' && pathname.startsWith(m)))
 
   return (
     <>
@@ -32,7 +39,13 @@ export default function AppShell({ children }) {
             {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
           </div>
         </div>
-        {children}
+        {hasAccess ? children : (
+          <div style={{ padding: 60, textAlign: 'center', color: '#64748b' }}>
+            <div style={{ fontSize: 40, marginBottom: 10 }}>🚫</div>
+            <div style={{ fontSize: 18, fontWeight: 'bold', color: '#0f2540' }}>Access Denied</div>
+            <div style={{ marginTop: 8 }}>Your account doesn't have permission to view this page. Contact your administrator.</div>
+          </div>
+        )}
       </div>
     </>
   )
