@@ -19,6 +19,7 @@ const navItems = [
   { name: 'Night Audit', href: '/nightaudit', icon: '🌙' },
   { name: 'Configuration', href: '/configuration', icon: '⚙️' },
   { name: 'Integrations', href: '/integrations', icon: '🔌' },
+  { name: 'Roles & Permissions', href: '/roles', icon: '🔐' },
 ]
 
 export default function Sidebar() {
@@ -26,6 +27,9 @@ export default function Sidebar() {
   const router = useRouter()
   const auth = useAuth()
   const profile = auth?.profile
+
+  const allowed = auth?.allowedModules
+  const visibleItems = allowed ? navItems.filter((item) => allowed.includes(item.href)) : navItems
 
   async function handleLogout() {
     await logout()
@@ -53,7 +57,7 @@ export default function Sidebar() {
         <div style={{ fontSize: '11px', color: '#7d97b8' }}>Property Management</div>
       </div>
       <nav style={{ marginTop: '10px' }}>
-        {navItems.map((item) => {
+        {visibleItems.map((item) => {
           const active = pathname === item.href
           return (
             <a
