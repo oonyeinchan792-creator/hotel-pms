@@ -38,13 +38,14 @@ export default function Sidebar() {
         width: '220px',
         background: '#0f2540',
         color: '#cbd5e1',
-        minHeight: '100vh',
+        height: '100vh',
         position: 'fixed',
         left: 0,
         top: 0,
         paddingTop: '20px',
-        paddingBottom: '80px',
+        paddingBottom: '90px',
         boxSizing: 'border-box',
+        overflowY: 'auto',
       }}
     >
       <div style={{ padding: '0 20px 20px 20px', borderBottom: '1px solid #1e3a5f' }}>
