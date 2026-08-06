@@ -76,9 +76,34 @@ export default function Sidebar() {
             </a>
           )
         })}
+        <button
+          onClick={() => window.print()}
+          className="no-print"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+            width: '100%',
+            padding: '12px 20px',
+            color: '#a8bdd6',
+            background: 'transparent',
+            border: 'none',
+            borderLeft: '3px solid transparent',
+            borderTop: '1px solid #1e3a5f',
+            marginTop: '10px',
+            textAlign: 'left',
+            cursor: 'pointer',
+            fontSize: '14px',
+            fontFamily: 'inherit',
+          }}
+        >
+          <span>🖨️</span>
+          <span>Print This Page</span>
+        </button>
       </nav>
 
       <div
+        className="no-print"
         style={{
           position: 'fixed',
           bottom: 0,
